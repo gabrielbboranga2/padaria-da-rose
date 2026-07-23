@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Padaria da Rose — Impressora</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@700&family=Inter:wght@400;500;600&display=swap');
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Inter', sans-serif; background: #FAF4E6; color: #16332A; }
+  header { background: #16332A; color: #FAF4E6; padding: 24px 28px; }
+  header h1 { font-family: 'Fraunces', serif; margin: 0; font-size: 22px; }
+  header span { color: #C99A3E; }
+  main { max-width: 480px; margin: 0 auto; padding: 24px 20px 60px; }
+  .card { background: #fff; border: 1px solid #16332A1A; border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+  .status { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #A63D40; }
+  .dot.ok { background: #16332A; }
+  label { display: block; font-size: 13px; margin: 12px 0 4px; color: #5B6B62; }
+  select, input, button { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #16332A33; font-size: 14px; }
+  button { background: #16332A; color: #FAF4E6; border: none; cursor: pointer; margin-top: 8px; font-weight: 500; }
+  button.secundario { background: #16332A0F; color: #16332A; }
+  .opcao { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid #16332A0F; cursor: pointer; }
+  .opcao input { width: auto; }
+  .lista-ip { font-size: 13px; color: #5B6B62; margin-top: 6px; }
+  .salvo { color: #16332A; font-size: 13px; margin-top: 8px; display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Padaria <span>da Rose</span> — configuração da impressora</h1>
+</header>
+<main>
+  <div class="card">
+    <div class="status"><span id="dotStatus" class="dot"></span><span id="textoStatus">Conectando ao Supabase...</span></div>
+    <div class="status" style="margin-top:6px"><span id="dotPedido" class="dot"></span><span id="textoPedido">Nenhum pedido ainda</span></div>
+  </div>
+
+  <div class="card">
+    <p style="margin-top:0"><b>Como os pedidos vão chegar?</b></p>
+
+    <div class="opcao">
+      <input type="radio" name="modo" value="nenhuma" id="modoNenhuma" />
+      <label for="modoNenhuma" style="margin:0">Sem impressora — só quero ver e ouvir os pedidos aqui e no painel</label>
+    </div>
+    <div class="opcao">
+      <input type="radio" name="modo" value="windows" id="modoWindows" />
+      <label for="modoWindows" style="margin:0">Impressora instalada no Windows</label>
+    </div>
+    <div class="opcao">
+      <input type="radio" name="modo" value="network" id="modoRede" />
+      <label for="modoRede" style="margin:0">Impressora de rede (tem IP próprio)</label>
+    </div>
+
+    <div id="painelWindows" style="display:none">
+      <label>Impressoras encontradas no Windows</label>
+      <select id="selectWindows"></select>
+      <button class="secundario" onclick="buscarWindows()">Atualizar lista</button>
+    </div>
+
+    <div id="painelRede" style="display:none">
+      <label>Impressoras encontradas na sua rede</label>
+      <select id="selectRede"></select>
+      <button class="secundario" onclick="buscarRede()">Procurar na rede (pode levar ~10s)</button>
+      <label>Ou digite o IP manualmente</label>
+      <input id="ipManual" placeholder="Ex: 192.168.0.50" />
+    </div>
+
+    <button onclick="salvar()">Salvar configuração</button>
+    <p class="salvo" id="msgSalvo">Configuração salva!</p>
+  </div>
+</main>
+
+<script>
+async function api(path, options) {
+  const r = await fetch(path, options);
+  return r.json();
+}
+
+async function atualizarStatus() {
+  const s = await api('/api/status');
+  document.getElementById('dotStatus').className = 'dot' + (s.conectadoSupabase ? ' ok' : '');
+  document.getElementById('textoStatus').innerText = s.conectadoSupabase ? 'Conectado — aguardando pedidos' : 'Sem conexão com o Supabase (confira o .env)';
+  if (s.ultimoPedido) {
+    document.getElementById('dotPedido').className = 'dot ok';
+    document.getElementById('textoPedido').innerText = 'Último pedido: #' + s.ultimoPedido.id + ' às ' + s.ultimoPedido.hora;
+  }
+}
+
+function mostrarPainel(modo) {
+  document.getElementById('painelWindows').style.display = modo === 'windows' ? 'block' : 'none';
+  document.getElementById('painelRede').style.display = modo === 'network' ? 'block' : 'none';
+}
+
+document.querySelectorAll('input[name=modo]').forEach((r) =>
+  r.addEventListener('change', (e) => mostrarPainel(e.target.value))
+);
+
+async function buscarWindows() {
+  const sel = document.getElementById('selectWindows');
+  sel.innerHTML = '<option>Procurando...</option>';
+  const { impressoras } = await api('/api/impressoras/windows');
+  sel.innerHTML = impressoras.length
+    ? impressoras.map((n) => `<option value="${n}">${n}</option>`).join('')
+    : '<option value="">Nenhuma encontrada</option>';
+}
+
+async function buscarRede() {
+  const sel = document.getElementById('selectRede');
+  sel.innerHTML = '<option>Procurando na rede...</option>';
+  const { encontrados } = await api('/api/impressoras/rede/scan');
+  sel.innerHTML = encontrados.length
+    ? encontrados.map((ip) => `<option value="${ip}">${ip}</option>`).join('')
+    : '<option value="">Nenhuma encontrada — digite o IP manualmente abaixo</option>';
+}
+
+async function salvar() {
+  const modo = document.querySelector('input[name=modo]:checked')?.value || 'nenhuma';
+  let config = { mode: modo };
+  if (modo === 'windows') {
+    config.printerName = document.getElementById('selectWindows').value;
+  } else if (modo === 'network') {
+    const ipSelecionado = document.getElementById('selectRede').value;
+    const ipManual = document.getElementById('ipManual').value;
+    config.ip = ipManual || ipSelecionado;
+    config.port = 9100;
+  }
+  await api('/api/configuracao', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config) });
+  const msg = document.getElementById('msgSalvo');
+  msg.style.display = 'block';
+  setTimeout(() => (msg.style.display = 'none'), 2000);
+}
+
+async function carregarConfigAtual() {
+  const cfg = await api('/api/configuracao');
+  const radio = document.querySelector(`input[name=modo][value="${cfg.mode || 'nenhuma'}"]`);
+  if (radio) { radio.checked = true; mostrarPainel(cfg.mode); }
+  if (cfg.mode === 'windows') await buscarWindows();
+  if (cfg.mode === 'network' && cfg.ip) document.getElementById('ipManual').value = cfg.ip;
+}
+
+carregarConfigAtual();
+atualizarStatus();
+setInterval(atualizarStatus, 4000);
+</script>
+</body>
+</html>
