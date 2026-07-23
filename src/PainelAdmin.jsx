@@ -176,6 +176,7 @@ function AbaPedidos() {
   const [pedidos, setPedidos] = useState([]);
   const printRef = useRef(null);
   const [pedidoParaImprimir, setPedidoParaImprimir] = useState(null);
+  const [carregandoImpressao, setCarregandoImpressao] = useState(false);
 
   const carregarPedidos = async () => {
     const { data } = await supabase
@@ -186,14 +187,42 @@ function AbaPedidos() {
     setPedidos(data || []);
   };
 
+  const aguardarItens = async (orderId, tentativas = 0) => {
+    if (tentativas >= 10) {
+      setCarregandoImpressao(false);
+      setPedidoParaImprimir(null);
+      return;
+    }
+    const { data } = await supabase
+      .from("orders")
+      .select("*, order_items(*)")
+      .eq("id", orderId)
+      .single();
+    if (data && data.order_items && data.order_items.length > 0) {
+      setPedidos((prev) => {
+        const idx = prev.findIndex((p) => p.id === orderId);
+        if (idx >= 0) {
+          const updated = [...prev];
+          updated[idx] = data;
+          return updated;
+        }
+        return [data, ...prev];
+      });
+      setCarregandoImpressao(false);
+      setPedidoParaImprimir(orderId);
+    } else {
+      setTimeout(() => aguardarItens(orderId, tentativas + 1), 500);
+    }
+  };
+
   useEffect(() => {
     carregarPedidos();
     const canal = supabase
       .channel("pedidos-novos")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, async (payload) => {
         playBeep();
-        await carregarPedidos();
-        setPedidoParaImprimir(payload.new.id);
+        setCarregandoImpressao(true);
+        await aguardarItens(payload.new.id);
       })
       .subscribe();
     return () => supabase.removeChannel(canal);
@@ -201,8 +230,10 @@ function AbaPedidos() {
 
   useEffect(() => {
     if (pedidoParaImprimir) {
-      // dá um tempinho para os itens do pedido chegarem antes de imprimir
-      setTimeout(() => window.print(), 600);
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => setPedidoParaImprimir(null), 1000);
+      }, 300);
     }
   }, [pedidoParaImprimir]);
 
@@ -227,7 +258,7 @@ function AbaPedidos() {
                 <p className="text-xs" style={{ color: "#5B6B62" }}>{p.customer_phone} · retirada: {p.pickup_time}</p>
                 {p.employee_slug && <p className="text-xs font-mono-ticket" style={{ color: "#8B4A2B" }}>via link: {p.employee_slug}</p>}
               </div>
-              <button onClick={() => { setPedidoParaImprimir(p.id); setTimeout(() => window.print(), 200); }} className="p-2 rounded-lg" style={{ background: "#16332A0F", color: "#16332A" }}>
+              <button onClick={() => setPedidoParaImprimir(p.id)} className="p-2 rounded-lg" style={{ background: "#16332A0F", color: "#16332A" }}>
                 <Printer size={15} />
               </button>
             </div>

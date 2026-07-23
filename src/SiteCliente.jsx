@@ -132,7 +132,27 @@ export default function SiteCliente() {
       qty: i.qty,
       unit_price: i.price,
     }));
-    await supabase.from("order_items").insert(items);
+
+    const { error: itemsError } = await supabase.from("order_items").insert(items);
+
+    if (itemsError) {
+      console.error("Erro ao enviar itens do pedido:", itemsError);
+      setConnectionOk(false);
+      const fallback = {
+        id: order.id.toString(),
+        customer: { ...customer },
+        items: [...cartItems],
+        total,
+        created_at: new Date().toLocaleString("pt-BR"),
+      };
+      const saved = JSON.parse(localStorage.getItem("orders_fallback") || "[]");
+      saved.push(fallback);
+      localStorage.setItem("orders_fallback", JSON.stringify(saved));
+      setLocalOrder(fallback);
+      setOrderError(itemsError.message);
+      setStep("fallback");
+      return;
+    }
 
     setOrderNumber(order.id);
     setStep("enviado");

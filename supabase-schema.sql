@@ -83,6 +83,12 @@ create policy "clientes podem criar pedidos"
   to anon
   with check (true);
 
+-- admin logado também pode criar pedidos (caso a sessão esteja ativa no browser)
+create policy "authenticated pode criar pedidos"
+  on orders for insert
+  to authenticated
+  with check (true);
+
 -- só o administrador logado pode ver e atualizar pedidos
 create policy "admin ve e atualiza pedidos"
   on orders for select
@@ -94,6 +100,12 @@ create policy "admin atualiza pedidos"
   to authenticated
   using (true)
   with check (true);
+
+-- admin pode deletar pedidos
+create policy "admin pode deletar pedidos"
+  on orders for delete
+  to authenticated
+  using (true);
 
 -- ------------------------------------------------------------
 -- ITENS DO PEDIDO
@@ -113,8 +125,20 @@ create policy "clientes podem criar itens do pedido"
   to anon
   with check (true);
 
+-- admin logado também pode criar itens
+create policy "authenticated pode criar itens do pedido"
+  on order_items for insert
+  to authenticated
+  with check (true);
+
 create policy "admin ve itens do pedido"
   on order_items for select
+  to authenticated
+  using (true);
+
+-- admin pode deletar itens
+create policy "admin pode deletar itens do pedido"
+  on order_items for delete
   to authenticated
   using (true);
 
