@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Lock, LogOut, Package, ShoppingBag, Users, Plus, Trash2, Printer,
   Copy, Check, Wheat, ChevronDown, Bell, TrendingUp, Clock, AlertCircle,
-  RefreshCw, Edit3, ToggleLeft, ToggleRight, Link2, Search
+  RefreshCw, Edit3, ToggleLeft, ToggleRight, Link2, Search, Zap, Coffee,
+  Star, Activity, ArrowUpRight, BarChart2, Sparkles
 } from "lucide-react";
 import { supabase } from "./lib/supabaseClient";
 
@@ -21,12 +22,130 @@ function playBeep() {
 }
 
 const STATUS_CONFIG = {
-  novo:       { label: "Novo",       bg: "#EEF2FF", color: "#4338CA", dot: "#6366F1" },
-  preparando: { label: "Preparando", bg: "#FFF7ED", color: "#C2410C", dot: "#F97316" },
-  pronto:     { label: "Pronto",     bg: "#F0FDF4", color: "#15803D", dot: "#22C55E" },
-  entregue:   { label: "Entregue",   bg: "#F8FAFC", color: "#475569", dot: "#94A3B8" },
-  cancelado:  { label: "Cancelado",  bg: "#FFF1F2", color: "#BE123C", dot: "#F43F5E" },
+  novo:       { label: "Novo",       bg: "rgba(99,102,241,0.12)",  color: "#818CF8", dot: "#6366F1",  glow: "rgba(99,102,241,0.4)"  },
+  preparando: { label: "Preparando", bg: "rgba(251,146,60,0.12)",  color: "#FB923C", dot: "#F97316",  glow: "rgba(249,115,22,0.4)"  },
+  pronto:     { label: "Pronto",     bg: "rgba(52,211,153,0.12)",  color: "#34D399", dot: "#10B981",  glow: "rgba(16,185,129,0.4)"  },
+  entregue:   { label: "Entregue",   bg: "rgba(148,163,184,0.12)", color: "#94A3B8", dot: "#64748B",  glow: "rgba(100,116,139,0.3)" },
+  cancelado:  { label: "Cancelado",  bg: "rgba(248,113,113,0.12)", color: "#F87171", dot: "#EF4444",  glow: "rgba(239,68,68,0.4)"   },
 };
+
+/* ── GLOBAL STYLES ─────────────────────────────────────────── */
+const GLOBAL_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #080B14;
+    color: #E2E8F0;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .font-display { font-family: 'Syne', sans-serif; }
+  .font-mono    { font-family: 'JetBrains Mono', monospace; }
+
+  /* ─── Animations ─── */
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
+  @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
+  @keyframes pulse    { 0%,100% { opacity:.5; } 50% { opacity:1; } }
+  @keyframes glow     { 0%,100% { box-shadow: 0 0 16px var(--glow,#6366F1); } 50% { box-shadow: 0 0 32px var(--glow,#6366F1); } }
+  @keyframes spin     { to { transform: rotate(360deg); } }
+  @keyframes slideIn  { from { transform:translateX(-12px); opacity:0; } to { transform:none; opacity:1; } }
+  @keyframes popIn    { 0% { transform:scale(.85); opacity:0; } 70% { transform:scale(1.04); } 100% { transform:scale(1); opacity:1; } }
+  @keyframes shimmer  { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
+  @keyframes neonPulse{ 0%,100%{text-shadow:0 0 6px #E8C36A,0 0 20px rgba(232,195,106,.4);} 50%{text-shadow:0 0 12px #E8C36A,0 0 40px rgba(232,195,106,.6);} }
+  @keyframes borderGlow{ 0%,100%{border-color:rgba(232,195,106,.25);} 50%{border-color:rgba(232,195,106,.55);} }
+  @keyframes newOrder { 0%{transform:scale(1);} 25%{transform:scale(1.015);} 75%{transform:scale(.99);} 100%{transform:scale(1);} }
+  @keyframes dotPulse { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.5);opacity:.7;} }
+
+  .animate-fade-up   { animation: fadeUp .5s cubic-bezier(.22,1,.36,1) both; }
+  .animate-fade-in   { animation: fadeIn .35s ease both; }
+  .animate-pop-in    { animation: popIn .45s cubic-bezier(.22,1,.36,1) both; }
+  .animate-new-order { animation: newOrder .6s ease; }
+  .dot-pulse         { animation: dotPulse 1.8s ease-in-out infinite; }
+
+  /* ─── Reusable utilities ─── */
+  .glass {
+    background: rgba(255,255,255,0.035);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .glass-card {
+    background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(12px);
+    border-radius: 18px;
+    transition: all .25s ease;
+  }
+  .glass-card:hover {
+    border-color: rgba(232,195,106,0.22);
+    box-shadow: 0 8px 32px rgba(0,0,0,.35), 0 0 0 1px rgba(232,195,106,.08);
+    transform: translateY(-2px);
+  }
+
+  .tab-btn { transition: all .2s ease; }
+  .tab-btn:hover { background: rgba(255,255,255,.06) !important; }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #E8C36A 0%, #D4A04A 100%);
+    color: #0D0F18;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all .18s ease;
+    box-shadow: 0 4px 20px rgba(232,195,106,.3);
+  }
+  .btn-primary:hover { filter: brightness(1.08); box-shadow: 0 6px 28px rgba(232,195,106,.45); transform: translateY(-1px); }
+  .btn-primary:active { transform: scale(.97); }
+
+  .btn-ghost {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    color: #94A3B8;
+    cursor: pointer;
+    transition: all .18s ease;
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.18); color: #E2E8F0; }
+
+  .input-dark {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 10px;
+    color: #E2E8F0;
+    font-family: 'Inter', sans-serif;
+    transition: all .2s;
+    outline: none;
+    width: 100%;
+  }
+  .input-dark::placeholder { color: #475569; }
+  .input-dark:focus {
+    border-color: rgba(232,195,106,.5);
+    box-shadow: 0 0 0 3px rgba(232,195,106,.1);
+    background: rgba(255,255,255,.06);
+  }
+
+  select.input-dark { appearance: none; }
+
+  /* ─── Status bar gradient map ─── */
+  .bar-novo       { background: linear-gradient(90deg,#6366F1,#818CF8); }
+  .bar-preparando { background: linear-gradient(90deg,#F97316,#FBBF24); }
+  .bar-pronto     { background: linear-gradient(90deg,#10B981,#34D399); }
+  .bar-entregue   { background: linear-gradient(90deg,#475569,#64748B); }
+  .bar-cancelado  { background: linear-gradient(90deg,#EF4444,#F87171); }
+
+  /* ─── Scrollbar ─── */
+  ::-webkit-scrollbar { width:5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius:3px; }
+
+  @media print {
+    body * { visibility: hidden; }
+    .comanda-print, .comanda-print * { visibility: visible; }
+    .comanda-print { position: fixed; top: 0; left: 0; width: 280px; }
+  }
+`;
 
 export default function PainelAdmin() {
   const [session, setSession] = useState(null);
@@ -41,72 +160,60 @@ export default function PainelAdmin() {
   if (!session) return <TelaLogin />;
 
   const TABS = [
-    { id: "pedidos",      label: "Pedidos",       icon: ShoppingBag },
-    { id: "produtos",     label: "Produtos",      icon: Package },
-    { id: "funcionarios", label: "Funcionários",  icon: Users },
+    { id: "pedidos",      label: "Pedidos",      icon: ShoppingBag },
+    { id: "produtos",     label: "Produtos",     icon: Package     },
+    { id: "funcionarios", label: "Funcionários", icon: Users       },
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F4F1EC", fontFamily: "'Inter', sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
-        .font-display { font-family: 'Playfair Display', serif; }
-        .font-mono { font-family: 'IBM Plex Mono', monospace; }
-        @media print {
-          body * { visibility: hidden; }
-          .comanda-print, .comanda-print * { visibility: visible; }
-          .comanda-print { position: fixed; top: 0; left: 0; width: 280px; }
-        }
-        .tab-btn { transition: all 0.2s ease; }
-        .tab-btn:hover { background: rgba(255,255,255,0.12) !important; }
-        .admin-card { transition: box-shadow 0.2s ease; }
-        .admin-card:hover { box-shadow: 0 6px 24px rgba(45,24,16,0.10) !important; }
-        .btn-sm { transition: all 0.15s ease; }
-        .btn-sm:hover { filter: brightness(0.94); }
-        .btn-sm:active { transform: scale(0.97); }
-        select { appearance: none; background-image: none; }
-      `}</style>
+    <div style={{ minHeight: "100vh", background: "#080B14" }}>
+      <style>{GLOBAL_CSS}</style>
+
+      {/* Ambient blobs */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: "-15%", left: "-10%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%)" }} />
+        <div style={{ position: "absolute", bottom: "-10%", right: "-5%",  width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(232,195,106,0.05) 0%, transparent 70%)" }} />
+      </div>
 
       {/* ═══ TOPBAR ═══ */}
       <header style={{
-        background: "linear-gradient(135deg, #1C0F08 0%, #2A1610 100%)",
-        borderBottom: "1px solid rgba(232,195,106,0.12)",
-        position: "sticky", top: 0, zIndex: 50
+        position: "sticky", top: 0, zIndex: 50,
+        background: "rgba(8,11,20,0.85)",
+        backdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
       }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 28px", height: 68, display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
           {/* Brand */}
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <div style={{
-              width: 40, height: 40, borderRadius: "50%", overflow: "hidden",
-              boxShadow: "0 0 0 1px rgba(232,195,106,0.2), 0 4px 14px rgba(0,0,0,0.35)"
+              width: 42, height: 42, borderRadius: "50%", overflow: "hidden",
+              boxShadow: "0 0 0 2px rgba(232,195,106,0.3), 0 4px 16px rgba(0,0,0,0.5)"
             }}>
-              <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
             <div>
-              <h1 className="font-display" style={{ fontSize: "1.1rem", fontWeight: 700, color: "#FFF8F0", lineHeight: 1.1 }}>
-                Padaria <span style={{ color: "#E8C36A" }}>da Rose</span>
+              <h1 className="font-display" style={{ fontSize: "1.1rem", fontWeight: 700, color: "#FFF8F0", lineHeight: 1.1, letterSpacing: "-0.01em" }}>
+                Padaria <span style={{ color: "#E8C36A", animation: "neonPulse 3s ease-in-out infinite" }}>da Rose</span>
               </h1>
-              <p style={{ fontSize: "0.7rem", color: "#7A6B5D", letterSpacing: "0.04em" }}>Painel de gerenciamento</p>
+              <p style={{ fontSize: "0.68rem", color: "#475569", letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Painel Admin</p>
             </div>
           </div>
 
-          {/* Right side */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <button onClick={() => supabase.auth.signOut()}
-              style={{
-                display: "flex", alignItems: "center", gap: 7,
-                padding: "8px 16px", borderRadius: 100,
-                background: "rgba(232,195,106,0.08)", border: "1px solid rgba(232,195,106,0.18)",
-                color: "#C4A98E", fontSize: "0.82rem", fontWeight: 500, cursor: "pointer",
-                transition: "all 0.2s"
-              }}>
-              <LogOut size={14} /> Sair
-            </button>
+          {/* Live indicator */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 100, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)" }}>
+            <span className="dot-pulse" style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981", display: "block" }} />
+            <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#34D399", letterSpacing: "0.04em" }}>ONLINE</span>
           </div>
+
+          {/* Logout */}
+          <button onClick={() => supabase.auth.signOut()} className="btn-ghost"
+            style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 100, fontSize: "0.82rem", fontWeight: 500 }}>
+            <LogOut size={13} /> Sair
+          </button>
         </div>
 
-        {/* Tab nav */}
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", display: "flex", gap: 4, paddingBottom: 0 }}>
+        {/* Tabs */}
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 28px", display: "flex", gap: 2, position: "relative", zIndex: 1 }}>
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.id;
@@ -114,13 +221,14 @@ export default function PainelAdmin() {
               <button key={t.id} onClick={() => setTab(t.id)} className="tab-btn"
                 style={{
                   display: "flex", alignItems: "center", gap: 7,
-                  padding: "10px 18px", fontSize: "0.85rem", fontWeight: active ? 600 : 400,
-                  color: active ? "#E8C36A" : "#8A7A6A",
+                  padding: "12px 18px", fontSize: "0.84rem", fontWeight: active ? 600 : 400,
+                  color: active ? "#E8C36A" : "#64748B",
                   background: "none", border: "none", cursor: "pointer",
                   borderBottom: active ? "2px solid #E8C36A" : "2px solid transparent",
-                  marginBottom: -1, transition: "all 0.2s", borderRadius: "4px 4px 0 0"
+                  marginBottom: -1, borderRadius: "6px 6px 0 0",
+                  transition: "all .2s"
                 }}>
-                <Icon size={15} /> {t.label}
+                <Icon size={14} /> {t.label}
               </button>
             );
           })}
@@ -128,7 +236,7 @@ export default function PainelAdmin() {
       </header>
 
       {/* ═══ CONTENT ═══ */}
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 24px 60px" }}>
+      <main style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 28px 80px", position: "relative", zIndex: 1 }}>
         {tab === "pedidos"      && <AbaPedidos />}
         {tab === "produtos"     && <AbaProdutos />}
         {tab === "funcionarios" && <AbaFuncionarios />}
@@ -158,83 +266,73 @@ function TelaLogin() {
   return (
     <div style={{
       minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "24px", fontFamily: "'Inter', sans-serif",
-      background: "linear-gradient(160deg, #1C0F08 0%, #2A1610 55%, #3A2218 100%)"
+      padding: 24, background: "#080B14", position: "relative", overflow: "hidden"
     }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap');
-        .font-display { font-family: 'Playfair Display', serif; }
-      `}</style>
-      <div style={{ width: "100%", maxWidth: 380 }}>
+      <style>{GLOBAL_CSS}</style>
+
+      {/* Background art */}
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", top: "20%", left: "15%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,.12) 0%, transparent 70%)" }} />
+        <div style={{ position: "absolute", bottom: "15%", right: "10%", width: 350, height: 350, borderRadius: "50%", background: "radial-gradient(circle, rgba(232,195,106,.08) 0%, transparent 70%)" }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+      </div>
+
+      <div style={{ width: "100%", maxWidth: 400, position: "relative", zIndex: 1 }} className="animate-fade-up">
         {/* Logo */}
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
+        <div style={{ textAlign: "center", marginBottom: 36 }}>
           <div style={{
-            width: 80, height: 80, borderRadius: "50%", overflow: "hidden",
-            margin: "0 auto 16px",
-            boxShadow: "0 0 0 1px rgba(232,195,106,0.2), 0 10px 36px rgba(0,0,0,0.5)"
+            width: 88, height: 88, borderRadius: "50%", overflow: "hidden",
+            margin: "0 auto 18px",
+            boxShadow: "0 0 0 1px rgba(232,195,106,0.3), 0 0 40px rgba(232,195,106,0.15), 0 16px 40px rgba(0,0,0,.6)"
           }}>
-            <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </div>
-          <h2 className="font-display" style={{ fontSize: "1.6rem", fontWeight: 700, color: "#FFF8F0", marginBottom: 4 }}>
+          <h2 className="font-display" style={{ fontSize: "1.8rem", fontWeight: 700, color: "#FFF8F0", marginBottom: 6, letterSpacing: "-0.02em" }}>
             Painel da Rose
           </h2>
-          <p style={{ fontSize: "0.83rem", color: "#7A6B5D" }}>Área restrita — acesso autorizado</p>
+          <p style={{ fontSize: "0.82rem", color: "#475569" }}>Área restrita — acesso autorizado</p>
         </div>
 
-        {/* Form */}
+        {/* Card */}
         <div style={{
-          background: "#FDFBF8",
-          borderRadius: 20,
+          background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+          border: "1px solid rgba(255,255,255,0.09)",
+          borderRadius: 24,
           padding: "32px 28px",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.35)"
+          boxShadow: "0 24px 64px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.07)",
+          backdropFilter: "blur(12px)"
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24, padding: "9px 14px", borderRadius: 10, background: "rgba(45,24,16,0.05)" }}>
-            <Lock size={15} color="#8A7A6A" />
-            <span style={{ fontSize: "0.78rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "#8A7A6A" }}>Acesso restrito</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 24, padding: "10px 14px", borderRadius: 12, background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)" }}>
+            <Lock size={14} color="#818CF8" />
+            <span style={{ fontSize: "0.76rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#818CF8" }}>Acesso restrito</span>
           </div>
 
           <form onSubmit={entrar}>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#5C3D2E", marginBottom: 7 }}>E-mail</label>
-              <input value={email} onChange={(e) => setEmail(e.target.value)} required type="email" placeholder="seu@email.com"
-                style={{
-                  width: "100%", padding: "12px 16px", borderRadius: 12,
-                  border: "1.5px solid rgba(212,160,74,0.2)", background: "#FFFFFF",
-                  color: "#2D1810", fontSize: "0.93rem", boxSizing: "border-box",
-                  transition: "border-color 0.2s, box-shadow 0.2s", outline: "none"
-                }}
-                onFocus={(e) => { e.target.style.borderColor = "#D4A04A"; e.target.style.boxShadow = "0 0 0 3px rgba(212,160,74,0.12)"; }}
-                onBlur={(e) => { e.target.style.borderColor = "rgba(212,160,74,0.2)"; e.target.style.boxShadow = "none"; }}
-              />
-            </div>
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#5C3D2E", marginBottom: 7 }}>Senha</label>
-              <input value={senha} onChange={(e) => setSenha(e.target.value)} required type="password" placeholder="••••••••"
-                style={{
-                  width: "100%", padding: "12px 16px", borderRadius: 12,
-                  border: "1.5px solid rgba(212,160,74,0.2)", background: "#FFFFFF",
-                  color: "#2D1810", fontSize: "0.93rem", boxSizing: "border-box",
-                  transition: "border-color 0.2s, box-shadow 0.2s", outline: "none"
-                }}
-                onFocus={(e) => { e.target.style.borderColor = "#D4A04A"; e.target.style.boxShadow = "0 0 0 3px rgba(212,160,74,0.12)"; }}
-                onBlur={(e) => { e.target.style.borderColor = "rgba(212,160,74,0.2)"; e.target.style.boxShadow = "none"; }}
-              />
-            </div>
+            {[
+              { label: "E-mail", key: "email", type: "email", value: email, onChange: setEmail, placeholder: "seu@email.com" },
+              { label: "Senha", key: "senha", type: "password", value: senha, onChange: setSenha, placeholder: "••••••••" },
+            ].map((f) => (
+              <div key={f.key} style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: "0.73rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "#64748B", marginBottom: 8 }}>{f.label}</label>
+                <input
+                  value={f.value} onChange={(e) => f.onChange(e.target.value)}
+                  required type={f.type} placeholder={f.placeholder}
+                  className="input-dark"
+                  style={{ padding: "13px 16px", fontSize: "0.93rem" }}
+                />
+              </div>
+            ))}
+
             {erro && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderRadius: 10, background: "rgba(184,74,74,0.07)", marginBottom: 16 }}>
-                <AlertCircle size={14} color="#B84A4A" />
-                <p style={{ fontSize: "0.85rem", color: "#B84A4A", margin: 0 }}>{erro}</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.18)", marginBottom: 16 }}>
+                <AlertCircle size={14} color="#F87171" />
+                <p style={{ fontSize: "0.84rem", color: "#F87171" }}>{erro}</p>
               </div>
             )}
-            <button type="submit" disabled={carregando}
-              style={{
-                width: "100%", padding: "14px", borderRadius: 12,
-                background: "linear-gradient(135deg, #2D1810, #4A2C1A)",
-                color: "#FFF8F0", fontWeight: 700, fontSize: "0.95rem",
-                border: "none", cursor: carregando ? "not-allowed" : "pointer",
-                boxShadow: "0 6px 20px rgba(45,24,16,0.28)", transition: "all 0.15s"
-              }}>
-              {carregando ? "Entrando…" : "Entrar"}
+
+            <button type="submit" disabled={carregando} className="btn-primary"
+              style={{ width: "100%", padding: 15, borderRadius: 13, fontSize: "0.95rem", marginTop: 8, opacity: carregando ? .7 : 1 }}>
+              {carregando ? "Entrando…" : "Entrar →"}
             </button>
           </form>
         </div>
@@ -289,7 +387,7 @@ function AbaPedidos() {
         setNovoPedidoId(payload.new.id);
         setCarregandoImpressao(true);
         await aguardarItens(payload.new.id);
-        setTimeout(() => setNovoPedidoId(null), 4000);
+        setTimeout(() => setNovoPedidoId(null), 5000);
       })
       .subscribe();
     return () => supabase.removeChannel(canal);
@@ -308,118 +406,144 @@ function AbaPedidos() {
 
   const pedidoImpresso = pedidos.find((p) => p.id === pedidoParaImprimir);
 
-  // Stats
-  const novos = pedidos.filter((p) => p.status === "novo").length;
-  const preparando = pedidos.filter((p) => p.status === "preparando").length;
+  const novos    = pedidos.filter((p) => p.status === "novo").length;
+  const prepando = pedidos.filter((p) => p.status === "preparando").length;
   const totalHoje = pedidos.filter((p) => {
     const d = new Date(p.created_at);
-    const hoje = new Date();
-    return d.toDateString() === hoje.toDateString();
+    return d.toDateString() === new Date().toDateString();
   }).reduce((s, p) => s + Number(p.total), 0);
 
   return (
-    <div>
-      {/* Info banner */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 10, padding: "12px 16px",
-        borderRadius: 12, background: "rgba(232,195,106,0.08)",
-        border: "1px solid rgba(232,195,106,0.18)", marginBottom: 24
-      }}>
-        <Bell size={15} color="#D4A04A" style={{ flexShrink: 0 }} />
-        <p style={{ fontSize: "0.83rem", color: "#7A6B5D", margin: 0 }}>
-          Deixe esta aba aberta — cada novo pedido toca um som e imprime a comanda automaticamente.
-        </p>
-        <button onClick={carregarPedidos}
-          style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 8, background: "rgba(212,160,74,0.1)", border: "1px solid rgba(212,160,74,0.2)", color: "#8A7A6A", fontSize: "0.78rem", cursor: "pointer" }}>
-          <RefreshCw size={12} /> Atualizar
+    <div className="animate-fade-up">
+      {/* Header row */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+        <div>
+          <h2 className="font-display" style={{ fontSize: "1.6rem", fontWeight: 700, color: "#F1F5F9", letterSpacing: "-0.02em", marginBottom: 4 }}>
+            Pedidos
+          </h2>
+          <p style={{ fontSize: "0.83rem", color: "#475569" }}>Monitoramento em tempo real</p>
+        </div>
+        <button onClick={carregarPedidos} className="btn-ghost"
+          style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", borderRadius: 100, fontSize: "0.82rem" }}>
+          <RefreshCw size={13} /> Atualizar
         </button>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 24 }}>
+      {/* Stats grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 28 }}>
         {[
-          { label: "Novos", value: novos, color: "#4338CA", bg: "#EEF2FF", icon: <Bell size={18} color="#4338CA" /> },
-          { label: "Preparando", value: preparando, color: "#C2410C", bg: "#FFF7ED", icon: <Clock size={18} color="#C2410C" /> },
-          { label: "Faturado hoje", value: money(totalHoje), color: "#15803D", bg: "#F0FDF4", icon: <TrendingUp size={18} color="#15803D" />, mono: true },
-        ].map((s) => (
-          <div key={s.label} style={{
-            background: "#FFFFFF", borderRadius: 14, padding: "16px 20px",
-            border: "1px solid rgba(0,0,0,0.05)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
-          }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-              <span style={{ fontSize: "0.76rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "#9A8A7A" }}>{s.label}</span>
-              <div style={{ width: 34, height: 34, borderRadius: 10, background: s.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>{s.icon}</div>
+          { label: "Novos pedidos",   value: novos,            icon: Bell,       accent: "#6366F1", glow: "rgba(99,102,241,.25)",  sub: "aguardando" },
+          { label: "Em preparo",      value: prepando,         icon: Activity,   accent: "#F97316", glow: "rgba(249,115,22,.25)", sub: "na cozinha" },
+          { label: "Faturado hoje",   value: money(totalHoje), icon: TrendingUp, accent: "#10B981", glow: "rgba(16,185,129,.25)", sub: "receita do dia", mono: true },
+        ].map((s, i) => {
+          const Icon = s.icon;
+          return (
+            <div key={s.label} className="glass-card animate-fade-up" style={{ padding: "22px 24px", animationDelay: `${i * 0.07}s` }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
+                <div>
+                  <p style={{ fontSize: "0.72rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#475569", marginBottom: 10 }}>{s.label}</p>
+                  <p style={{ fontSize: s.mono ? "1.25rem" : "2.2rem", fontWeight: 700, color: s.accent, fontFamily: s.mono ? "'JetBrains Mono', monospace" : "'Syne', sans-serif", lineHeight: 1 }}>{s.value}</p>
+                  <p style={{ fontSize: "0.75rem", color: "#334155", marginTop: 6 }}>{s.sub}</p>
+                </div>
+                <div style={{
+                  width: 44, height: 44, borderRadius: 14,
+                  background: `radial-gradient(circle, ${s.glow}, transparent 70%)`,
+                  border: `1px solid ${s.accent}33`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: `0 0 20px ${s.glow}`
+                }}>
+                  <Icon size={19} color={s.accent} />
+                </div>
+              </div>
+              <div style={{ height: 2, borderRadius: 1, background: `linear-gradient(90deg, ${s.accent}, transparent)`, opacity: .5 }} />
             </div>
-            <p style={{ fontSize: s.mono ? "1.1rem" : "1.7rem", fontWeight: 700, color: s.color, fontFamily: s.mono ? "'IBM Plex Mono', monospace" : "inherit", margin: 0 }}>{s.value}</p>
-          </div>
-        ))}
+          );
+        })}
+      </div>
+
+      {/* Notification bar */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 10, padding: "13px 18px",
+        borderRadius: 14, background: "rgba(232,195,106,0.06)",
+        border: "1px solid rgba(232,195,106,0.14)", marginBottom: 24,
+        animation: "borderGlow 4s ease-in-out infinite"
+      }}>
+        <Zap size={14} color="#E8C36A" style={{ flexShrink: 0 }} />
+        <p style={{ fontSize: "0.82rem", color: "#94A3B8" }}>
+          Mantenha esta aba aberta — cada novo pedido toca um alerta e imprime a comanda automaticamente.
+        </p>
       </div>
 
       {/* Pedidos list */}
       {carregando ? (
-        <div style={{ textAlign: "center", padding: "60px 0", color: "#9A8A7A" }}>
-          <Wheat size={32} color="#D4A04A" style={{ margin: "0 auto 12px", display: "block", opacity: 0.5 }} />
-          <p style={{ fontSize: "0.9rem" }}>Carregando pedidos…</p>
+        <div style={{ textAlign: "center", padding: "80px 0" }}>
+          <Wheat size={32} color="#E8C36A" style={{ margin: "0 auto 12px", display: "block", opacity: .5, animation: "spin 2s linear infinite" }} />
+          <p style={{ color: "#475569", fontSize: "0.9rem" }}>Carregando pedidos…</p>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {pedidos.map((p) => {
+          {pedidos.map((p, i) => {
             const sc = STATUS_CONFIG[p.status] || STATUS_CONFIG.novo;
             const isNew = p.id === novoPedidoId;
             return (
-              <div key={p.id} className="admin-card"
+              <div key={p.id}
+                className={isNew ? "animate-new-order" : ""}
                 style={{
-                  background: "#FFFFFF", borderRadius: 16, overflow: "hidden",
-                  border: `1px solid ${isNew ? "rgba(99,102,241,0.4)" : "rgba(0,0,0,0.06)"}`,
-                  boxShadow: isNew ? "0 0 0 3px rgba(99,102,241,0.12), 0 4px 16px rgba(0,0,0,0.07)" : "0 2px 8px rgba(0,0,0,0.04)",
-                  transition: "all 0.3s ease"
+                  background: isNew
+                    ? "linear-gradient(145deg, rgba(99,102,241,0.10), rgba(255,255,255,0.03))"
+                    : "linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))",
+                  border: `1px solid ${isNew ? "rgba(99,102,241,0.4)" : "rgba(255,255,255,0.07)"}`,
+                  borderRadius: 18, overflow: "hidden",
+                  boxShadow: isNew ? `0 0 24px rgba(99,102,241,0.2), 0 4px 20px rgba(0,0,0,.3)` : "0 2px 12px rgba(0,0,0,.2)",
+                  transition: "all .3s ease",
+                  animation: isNew ? "borderGlow 1s ease-in-out infinite" : "none"
                 }}>
-                {/* Status bar top */}
-                <div style={{ height: 3, background: sc.dot === "#6366F1" ? "linear-gradient(90deg,#6366F1,#818CF8)" : sc.dot === "#F97316" ? "linear-gradient(90deg,#F97316,#FBBF24)" : sc.dot === "#22C55E" ? "linear-gradient(90deg,#22C55E,#4ADE80)" : sc.dot === "#F43F5E" ? "linear-gradient(90deg,#F43F5E,#FB7185)" : "linear-gradient(90deg,#94A3B8,#CBD5E1)" }} />
+                {/* Status strip */}
+                <div style={{ height: 3 }} className={`bar-${p.status}`} />
 
-                <div style={{ padding: "16px 20px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
-                    {/* Info */}
+                <div style={{ padding: "18px 22px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
                     <div style={{ flex: 1, minWidth: 200 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-                        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, fontSize: "0.85rem", color: "#2D1810" }}>#{p.id}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                        <span className="font-mono" style={{ fontWeight: 700, fontSize: "0.83rem", color: "#94A3B8" }}>#{p.id}</span>
                         <span style={{
                           display: "inline-flex", alignItems: "center", gap: 5,
-                          padding: "3px 10px", borderRadius: 100,
+                          padding: "4px 10px", borderRadius: 100,
                           background: sc.bg, color: sc.color,
-                          fontSize: "0.72rem", fontWeight: 600
+                          fontSize: "0.72rem", fontWeight: 600, border: `1px solid ${sc.dot}33`
                         }}>
-                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: sc.dot }} />
+                          <span className={p.status === "novo" || p.status === "preparando" ? "dot-pulse" : ""} style={{ width: 6, height: 6, borderRadius: "50%", background: sc.dot, display: "block" }} />
                           {sc.label}
                         </span>
-                        {isNew && <span style={{ padding: "2px 8px", borderRadius: 100, background: "#EEF2FF", color: "#4338CA", fontSize: "0.7rem", fontWeight: 700 }}>NOVO</span>}
+                        {isNew && (
+                          <span style={{ padding: "3px 10px", borderRadius: 100, background: "rgba(99,102,241,0.15)", color: "#818CF8", fontSize: "0.7rem", fontWeight: 700, border: "1px solid rgba(99,102,241,0.3)" }}>
+                            ✦ NOVO
+                          </span>
+                        )}
                       </div>
-                      <p style={{ fontWeight: 700, color: "#1A1210", fontSize: "1rem", marginBottom: 3 }}>{p.customer_name}</p>
-                      <p style={{ fontSize: "0.82rem", color: "#7A6B5D", marginBottom: 2 }}>{p.customer_phone} · Retirada: <strong style={{ color: "#5C3D2E" }}>{p.pickup_time}</strong></p>
-                      {p.employee_slug && <p style={{ fontSize: "0.75rem", fontFamily: "'IBM Plex Mono', monospace", color: "#B8743A" }}>via: {p.employee_slug}</p>}
-                      {p.notes && <p style={{ fontSize: "0.78rem", color: "#8A7A6A", marginTop: 4, fontStyle: "italic" }}>Obs: {p.notes}</p>}
+                      <p style={{ fontWeight: 700, color: "#F1F5F9", fontSize: "1rem", marginBottom: 4 }}>{p.customer_name}</p>
+                      <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: 2 }}>
+                        {p.customer_phone} · Retirada: <strong style={{ color: "#94A3B8" }}>{p.pickup_time}</strong>
+                      </p>
+                      {p.employee_slug && <p style={{ fontSize: "0.74rem", fontFamily: "'JetBrains Mono', monospace", color: "#E8C36A", opacity: .7 }}>via: {p.employee_slug}</p>}
+                      {p.notes && <p style={{ fontSize: "0.78rem", color: "#475569", marginTop: 5, fontStyle: "italic" }}>💬 {p.notes}</p>}
                     </div>
 
-                    {/* Right actions */}
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
-                      <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, fontSize: "1.1rem", color: "#B85C1E" }}>{money(p.total)}</p>
+                      <p className="font-mono" style={{ fontWeight: 700, fontSize: "1.15rem", color: "#E8C36A" }}>{money(p.total)}</p>
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={() => setPedidoParaImprimir(p.id)} className="btn-sm"
-                          style={{
-                            display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 9,
-                            background: "rgba(45,24,16,0.07)", border: "none", color: "#5C3D2E",
-                            fontSize: "0.8rem", fontWeight: 500, cursor: "pointer"
-                          }}>
-                          <Printer size={13} /> Imprimir
+                        <button onClick={() => setPedidoParaImprimir(p.id)} className="btn-ghost"
+                          style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 9, fontSize: "0.79rem", fontWeight: 500 }}>
+                          <Printer size={12} /> Imprimir
                         </button>
                         <div style={{ position: "relative" }}>
                           <select value={p.status} onChange={(e) => mudarStatus(p.id, e.target.value)}
+                            className="input-dark"
                             style={{
                               padding: "7px 32px 7px 12px", borderRadius: 9,
-                              border: `1.5px solid ${sc.dot}33`,
                               background: sc.bg, color: sc.color,
-                              fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", outline: "none",
-                              fontFamily: "'Inter', sans-serif"
+                              fontSize: "0.79rem", fontWeight: 600, cursor: "pointer",
+                              border: `1px solid ${sc.dot}44`, width: "auto"
                             }}>
                             <option value="novo">Novo</option>
                             <option value="preparando">Preparando</option>
@@ -427,22 +551,22 @@ function AbaPedidos() {
                             <option value="entregue">Entregue</option>
                             <option value="cancelado">Cancelado</option>
                           </select>
-                          <ChevronDown size={12} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: sc.color }} />
+                          <ChevronDown size={11} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: sc.color }} />
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Items */}
                   {p.order_items && p.order_items.length > 0 && (
-                    <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(0,0,0,0.05)" }}>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
                         {p.order_items.map((it) => (
                           <span key={it.id} style={{
                             padding: "4px 12px", borderRadius: 8,
-                            background: "#F7F4F0", fontSize: "0.8rem", color: "#5C3D2E"
+                            background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
+                            fontSize: "0.79rem", color: "#94A3B8"
                           }}>
-                            <strong>{it.qty}×</strong> {it.product_name} · <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.75rem" }}>{money(it.unit_price * it.qty)}</span>
+                            <strong style={{ color: "#CBD5E1" }}>{it.qty}×</strong> {it.product_name} · <span className="font-mono" style={{ fontSize: "0.74rem", color: "#E8C36A" }}>{money(it.unit_price * it.qty)}</span>
                           </span>
                         ))}
                       </div>
@@ -453,9 +577,9 @@ function AbaPedidos() {
             );
           })}
           {pedidos.length === 0 && (
-            <div style={{ textAlign: "center", padding: "60px 0" }}>
-              <ShoppingBag size={36} color="#D4A04A" style={{ margin: "0 auto 12px", display: "block", opacity: 0.25 }} />
-              <p style={{ color: "#9A8A7A", fontSize: "0.95rem" }}>Nenhum pedido ainda.</p>
+            <div style={{ textAlign: "center", padding: "80px 0" }}>
+              <ShoppingBag size={36} color="#1E293B" style={{ margin: "0 auto 14px", display: "block" }} />
+              <p style={{ color: "#334155", fontSize: "0.95rem" }}>Nenhum pedido ainda.</p>
             </div>
           )}
         </div>
@@ -469,7 +593,7 @@ function AbaPedidos() {
             <p>Pedido #{pedidoImpresso.id}</p>
             <p>{pedidoImpresso.customer_name} — {pedidoImpresso.customer_phone}</p>
             <p>Retirada: {pedidoImpresso.pickup_time}</p>
-            {pedidoImpresso.employee_slug && <p>Atendido via: {pedidoImpresso.employee_slug}</p>}
+            {pedidoImpresso.employee_slug && <p>via: {pedidoImpresso.employee_slug}</p>}
             <p>------------------------------</p>
             {(pedidoImpresso.order_items || []).map((it) => (
               <p key={it.id}>{it.qty}x {it.product_name} — {money(it.unit_price * it.qty)}</p>
@@ -522,67 +646,62 @@ function AbaProdutos() {
   };
 
   const catLabel = { paes: "Pães", domingo: "Domingo", bolos: "Bolos & Doces" };
-  const catColor = { paes: "#D4A04A", domingo: "#E8635A", bolos: "#9B72D4" };
+  const catStyles = {
+    paes:    { color: "#FBBF24", bg: "rgba(251,191,36,.12)",  border: "rgba(251,191,36,.25)"  },
+    domingo: { color: "#F87171", bg: "rgba(248,113,113,.12)", border: "rgba(248,113,113,.25)" },
+    bolos:   { color: "#C084FC", bg: "rgba(192,132,252,.12)", border: "rgba(192,132,252,.25)" },
+  };
 
   return (
-    <div>
-      {/* Header with add button */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+    <div className="animate-fade-up">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
         <div>
-          <h2 className="font-display" style={{ fontSize: "1.35rem", fontWeight: 700, color: "#2D1810", marginBottom: 2 }}>Produtos</h2>
-          <p style={{ fontSize: "0.83rem", color: "#9A8A7A" }}>{produtos.length} produtos cadastrados</p>
+          <h2 className="font-display" style={{ fontSize: "1.6rem", fontWeight: 700, color: "#F1F5F9", letterSpacing: "-0.02em", marginBottom: 4 }}>Produtos</h2>
+          <p style={{ fontSize: "0.83rem", color: "#475569" }}>{produtos.length} produtos cadastrados</p>
         </div>
-        <button onClick={() => setFormOpen(!formOpen)} className="btn-sm"
-          style={{
-            display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 12,
-            background: "linear-gradient(135deg, #2D1810, #4A2C1A)",
-            color: "#FFF8F0", fontWeight: 600, fontSize: "0.88rem", border: "none", cursor: "pointer",
-            boxShadow: "0 4px 14px rgba(45,24,16,0.25)"
-          }}>
+        <button onClick={() => setFormOpen(!formOpen)} className="btn-primary"
+          style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 22px", borderRadius: 12, fontSize: "0.88rem" }}>
           <Plus size={15} /> Novo produto
         </button>
       </div>
 
       {/* Add form */}
       {formOpen && (
-        <div style={{
-          background: "#FFFFFF", borderRadius: 16, padding: "22px 24px", marginBottom: 20,
-          border: "1px solid rgba(212,160,74,0.2)", boxShadow: "0 4px 20px rgba(0,0,0,0.06)"
-        }}>
-          <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#2D1810", marginBottom: 16 }}>Adicionar produto</h3>
+        <div className="glass-card animate-fade-up" style={{ padding: "24px 26px", marginBottom: 24 }}>
+          <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#E2E8F0", marginBottom: 18 }}>✦ Adicionar produto</h3>
           <form onSubmit={adicionar}>
             <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr", gap: 12, marginBottom: 12 }}>
-              <input required placeholder="Nome do produto" value={novo.name} onChange={(e) => setNovo({ ...novo, name: e.target.value })}
-                style={{ padding: "10px 14px", borderRadius: 10, border: "1.5px solid rgba(212,160,74,0.2)", fontSize: "0.9rem", color: "#2D1810", outline: "none", background: "#FDFBF8" }}
-                onFocus={(e) => e.target.style.borderColor = "#D4A04A"} onBlur={(e) => e.target.style.borderColor = "rgba(212,160,74,0.2)"} />
-              <input placeholder="Descrição" value={novo.description} onChange={(e) => setNovo({ ...novo, description: e.target.value })}
-                style={{ padding: "10px 14px", borderRadius: 10, border: "1.5px solid rgba(212,160,74,0.2)", fontSize: "0.9rem", color: "#2D1810", outline: "none", background: "#FDFBF8" }}
-                onFocus={(e) => e.target.style.borderColor = "#D4A04A"} onBlur={(e) => e.target.style.borderColor = "rgba(212,160,74,0.2)"} />
-              <input required type="number" step="0.01" placeholder="Preço" value={novo.price} onChange={(e) => setNovo({ ...novo, price: e.target.value })}
-                style={{ padding: "10px 14px", borderRadius: 10, border: "1.5px solid rgba(212,160,74,0.2)", fontSize: "0.9rem", color: "#2D1810", outline: "none", background: "#FDFBF8" }}
-                onFocus={(e) => e.target.style.borderColor = "#D4A04A"} onBlur={(e) => e.target.style.borderColor = "rgba(212,160,74,0.2)"} />
+              {[
+                { placeholder: "Nome do produto", value: novo.name, key: "name", required: true },
+                { placeholder: "Descrição", value: novo.description, key: "description" },
+                { placeholder: "Preço", value: novo.price, key: "price", type: "number", required: true, step: "0.01" },
+              ].map((f) => (
+                <input key={f.key} required={f.required} type={f.type || "text"} step={f.step}
+                  placeholder={f.placeholder} value={f.value}
+                  onChange={(e) => setNovo({ ...novo, [f.key]: e.target.value })}
+                  className="input-dark" style={{ padding: "11px 14px", fontSize: "0.9rem" }} />
+              ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 18 }}>
               <div style={{ position: "relative" }}>
                 <select value={novo.category} onChange={(e) => setNovo({ ...novo, category: e.target.value })}
-                  style={{ width: "100%", padding: "10px 32px 10px 14px", borderRadius: 10, border: "1.5px solid rgba(212,160,74,0.2)", fontSize: "0.9rem", color: "#2D1810", outline: "none", background: "#FDFBF8", cursor: "pointer" }}>
+                  className="input-dark" style={{ padding: "11px 34px 11px 14px", fontSize: "0.9rem" }}>
                   <option value="paes">Pães</option>
                   <option value="domingo">Domingo</option>
                   <option value="bolos">Bolos & Doces</option>
                 </select>
-                <ChevronDown size={13} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#9A8A7A" }} />
+                <ChevronDown size={13} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#475569" }} />
               </div>
-              <input placeholder="Unidade (ex: unid., kg, dz)" value={novo.unit} onChange={(e) => setNovo({ ...novo, unit: e.target.value })}
-                style={{ padding: "10px 14px", borderRadius: 10, border: "1.5px solid rgba(212,160,74,0.2)", fontSize: "0.9rem", color: "#2D1810", outline: "none", background: "#FDFBF8" }}
-                onFocus={(e) => e.target.style.borderColor = "#D4A04A"} onBlur={(e) => e.target.style.borderColor = "rgba(212,160,74,0.2)"} />
+              <input placeholder="Unidade (ex: unid., kg, dz)" value={novo.unit}
+                onChange={(e) => setNovo({ ...novo, unit: e.target.value })}
+                className="input-dark" style={{ padding: "11px 14px", fontSize: "0.9rem" }} />
             </div>
             <div style={{ display: "flex", gap: 10 }}>
-              <button type="submit"
-                style={{ padding: "10px 24px", borderRadius: 10, background: "linear-gradient(135deg, #2D1810, #4A2C1A)", color: "#FFF8F0", fontWeight: 600, fontSize: "0.88rem", border: "none", cursor: "pointer" }}>
+              <button type="submit" className="btn-primary" style={{ padding: "11px 26px", borderRadius: 11, fontSize: "0.88rem" }}>
                 Salvar produto
               </button>
-              <button type="button" onClick={() => setFormOpen(false)}
-                style={{ padding: "10px 20px", borderRadius: 10, background: "#F4F1EC", color: "#7A6B5D", fontWeight: 500, fontSize: "0.88rem", border: "none", cursor: "pointer" }}>
+              <button type="button" onClick={() => setFormOpen(false)} className="btn-ghost"
+                style={{ padding: "11px 20px", borderRadius: 11, fontSize: "0.88rem" }}>
                 Cancelar
               </button>
             </div>
@@ -590,67 +709,65 @@ function AbaProdutos() {
         </div>
       )}
 
-      {/* Products table */}
-      <div style={{ background: "#FFFFFF", borderRadius: 16, border: "1px solid rgba(0,0,0,0.06)", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-        {/* Table header */}
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 100px 1fr auto", gap: 0, padding: "12px 20px", borderBottom: "1px solid rgba(0,0,0,0.05)", background: "#F9F7F4" }}>
+      {/* Table */}
+      <div style={{ background: "linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 18, overflow: "hidden" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 100px 1fr auto", gap: 0, padding: "13px 22px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
           {["Nome", "Categoria", "Preço", "Unidade", "Status", ""].map((h) => (
-            <span key={h} style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#9A8A7A" }}>{h}</span>
+            <span key={h} style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#334155" }}>{h}</span>
           ))}
         </div>
 
-        {produtos.map((p, i) => (
-          <div key={p.id} style={{
-            display: "grid", gridTemplateColumns: "2fr 1fr 1fr 100px 1fr auto",
-            gap: 0, padding: "14px 20px", alignItems: "center",
-            borderBottom: i < produtos.length - 1 ? "1px solid rgba(0,0,0,0.04)" : "none",
-            background: i % 2 === 0 ? "#FFFFFF" : "#FDFBF8"
-          }}>
-            <div>
-              <p style={{ fontWeight: 600, color: "#2D1810", fontSize: "0.92rem" }}>{p.name}</p>
-              {p.description && <p style={{ fontSize: "0.76rem", color: "#9A8A7A", marginTop: 2 }}>{p.description}</p>}
-            </div>
-            <span style={{
-              display: "inline-flex", padding: "3px 10px", borderRadius: 100,
-              background: catColor[p.category] + "15", color: catColor[p.category],
-              fontSize: "0.75rem", fontWeight: 600, width: "fit-content"
-            }}>{catLabel[p.category] || p.category}</span>
-            <div>
+        {produtos.map((p, i) => {
+          const cs = catStyles[p.category] || catStyles.paes;
+          return (
+            <div key={p.id} style={{
+              display: "grid", gridTemplateColumns: "2fr 1fr 1fr 100px 1fr auto",
+              gap: 0, padding: "15px 22px", alignItems: "center",
+              borderBottom: i < produtos.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+              transition: "background .2s",
+            }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+              <div>
+                <p style={{ fontWeight: 600, color: "#E2E8F0", fontSize: "0.92rem" }}>{p.name}</p>
+                {p.description && <p style={{ fontSize: "0.74rem", color: "#334155", marginTop: 2 }}>{p.description}</p>}
+              </div>
+              <span style={{
+                display: "inline-flex", padding: "4px 11px", borderRadius: 100,
+                background: cs.bg, color: cs.color, border: `1px solid ${cs.border}`,
+                fontSize: "0.74rem", fontWeight: 600, width: "fit-content"
+              }}>{catLabel[p.category] || p.category}</span>
               <input defaultValue={p.price} type="number" step="0.01"
                 onBlur={(e) => atualizarPreco(p.id, e.target.value)}
+                className="input-dark font-mono"
+                style={{ width: 95, padding: "7px 10px", fontSize: "0.84rem", color: "#E8C36A" }} />
+              <span style={{ fontSize: "0.82rem", color: "#475569" }}>{p.unit}</span>
+              <button onClick={() => alternarDisponibilidade(p)}
                 style={{
-                  width: 90, padding: "6px 10px", borderRadius: 8,
-                  border: "1.5px solid rgba(212,160,74,0.2)",
-                  fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.85rem", color: "#B85C1E",
-                  background: "#FDFBF8", outline: "none"
-                }}
-                onFocus={(e) => e.target.style.borderColor = "#D4A04A"}
-                onBlur2={(e) => e.target.style.borderColor = "rgba(212,160,74,0.2)"}
-              />
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "6px 13px", borderRadius: 9, border: "none", cursor: "pointer",
+                  fontSize: "0.77rem", fontWeight: 600, transition: "all .18s",
+                  background: p.available ? "rgba(16,185,129,0.12)" : "rgba(239,68,68,0.12)",
+                  color: p.available ? "#34D399" : "#F87171",
+                  border: `1px solid ${p.available ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.25)"}`
+                }}>
+                {p.available ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                {p.available ? "Disponível" : "Indisponível"}
+              </button>
+              <button onClick={() => remover(p.id)}
+                style={{ padding: 8, borderRadius: 8, background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.12)", color: "#F87171", cursor: "pointer", display: "flex", transition: "all .18s" }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(239,68,68,0.15)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "rgba(239,68,68,0.07)"}>
+                <Trash2 size={14} />
+              </button>
             </div>
-            <span style={{ fontSize: "0.83rem", color: "#7A6B5D" }}>{p.unit}</span>
-            <button onClick={() => alternarDisponibilidade(p)} className="btn-sm"
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 6,
-                padding: "5px 12px", borderRadius: 8, border: "none",
-                background: p.available ? "#F0FDF4" : "#FFF1F2",
-                color: p.available ? "#15803D" : "#BE123C",
-                fontSize: "0.78rem", fontWeight: 600, cursor: "pointer"
-              }}>
-              {p.available ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
-              {p.available ? "Disponível" : "Indisponível"}
-            </button>
-            <button onClick={() => remover(p.id)} className="btn-sm"
-              style={{ padding: 8, borderRadius: 8, background: "none", border: "none", color: "#D4756A", cursor: "pointer", display: "flex" }}>
-              <Trash2 size={15} />
-            </button>
-          </div>
-        ))}
+          );
+        })}
 
         {produtos.length === 0 && (
-          <div style={{ textAlign: "center", padding: "48px 0" }}>
-            <Package size={32} color="#D4A04A" style={{ margin: "0 auto 12px", display: "block", opacity: 0.25 }} />
-            <p style={{ color: "#9A8A7A", fontSize: "0.9rem" }}>Nenhum produto cadastrado ainda.</p>
+          <div style={{ textAlign: "center", padding: "60px 0" }}>
+            <Package size={32} color="#1E293B" style={{ margin: "0 auto 12px", display: "block" }} />
+            <p style={{ color: "#334155", fontSize: "0.9rem" }}>Nenhum produto cadastrado ainda.</p>
           </div>
         )}
       </div>
@@ -695,77 +812,77 @@ function AbaFuncionarios() {
   };
 
   return (
-    <div>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+    <div className="animate-fade-up">
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h2 className="font-display" style={{ fontSize: "1.35rem", fontWeight: 700, color: "#2D1810", marginBottom: 2 }}>Funcionários</h2>
-          <p style={{ fontSize: "0.83rem", color: "#9A8A7A" }}>Gere links personalizados para cada atendente</p>
+          <h2 className="font-display" style={{ fontSize: "1.6rem", fontWeight: 700, color: "#F1F5F9", letterSpacing: "-0.02em", marginBottom: 4 }}>Funcionários</h2>
+          <p style={{ fontSize: "0.83rem", color: "#475569" }}>Gere links personalizados para cada atendente</p>
         </div>
       </div>
 
       {/* Add form */}
-      <form onSubmit={adicionar} style={{ display: "flex", gap: 10, marginBottom: 24 }}>
+      <form onSubmit={adicionar} style={{ display: "flex", gap: 10, marginBottom: 28 }}>
         <input required placeholder="Nome do funcionário" value={nome} onChange={(e) => setNome(e.target.value)}
-          style={{
-            flex: 1, padding: "11px 16px", borderRadius: 12,
-            border: "1.5px solid rgba(212,160,74,0.2)", background: "#FFFFFF",
-            color: "#2D1810", fontSize: "0.92rem", outline: "none"
-          }}
-          onFocus={(e) => { e.target.style.borderColor = "#D4A04A"; e.target.style.boxShadow = "0 0 0 3px rgba(212,160,74,0.1)"; }}
-          onBlur={(e) => { e.target.style.borderColor = "rgba(212,160,74,0.2)"; e.target.style.boxShadow = "none"; }}
-        />
-        <button type="submit" className="btn-sm"
-          style={{
-            display: "flex", alignItems: "center", gap: 7, padding: "11px 22px", borderRadius: 12,
-            background: "linear-gradient(135deg, #2D1810, #4A2C1A)",
-            color: "#FFF8F0", fontWeight: 600, fontSize: "0.88rem", border: "none", cursor: "pointer",
-            boxShadow: "0 4px 14px rgba(45,24,16,0.25)"
-          }}>
+          className="input-dark" style={{ flex: 1, padding: "12px 16px", fontSize: "0.93rem", borderRadius: 13 }} />
+        <button type="submit" className="btn-primary"
+          style={{ display: "flex", alignItems: "center", gap: 7, padding: "12px 24px", borderRadius: 13, fontSize: "0.88rem", whiteSpace: "nowrap" }}>
           <Plus size={15} /> Adicionar
         </button>
       </form>
 
       {/* List */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {funcionarios.map((f) => {
+        {funcionarios.map((f, i) => {
           const link = `${window.location.origin.replace("/admin", "")}/?func=${f.slug}`;
           const copied = copiado === f.slug;
+          const colors = ["#818CF8", "#34D399", "#FBBF24", "#F87171", "#C084FC"];
+          const accent = colors[i % colors.length];
           return (
-            <div key={f.id} className="admin-card"
-              style={{
-                background: "#FFFFFF", borderRadius: 14, padding: "16px 20px",
-                border: "1px solid rgba(0,0,0,0.06)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap"
-              }}>
-              <div style={{ flex: 1, minWidth: 150 }}>
-                <p style={{ fontWeight: 600, color: "#2D1810", fontSize: "0.95rem", marginBottom: 4 }}>{f.name}</p>
-                <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.73rem", color: "#9A8A7A", wordBreak: "break-all" }}>{link}</p>
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => copiarLink(f.slug)} className="btn-sm"
-                  style={{
-                    display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 9,
-                    background: copied ? "#F0FDF4" : "rgba(45,24,16,0.06)",
-                    border: `1px solid ${copied ? "#22C55E33" : "rgba(0,0,0,0.06)"}`,
-                    color: copied ? "#15803D" : "#5C3D2E",
-                    fontSize: "0.82rem", fontWeight: 500, cursor: "pointer", transition: "all 0.2s"
+            <div key={f.id} className="glass-card animate-fade-up" style={{ padding: "18px 22px", animationDelay: `${i * 0.05}s` }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 150 }}>
+                  {/* Avatar */}
+                  <div style={{
+                    width: 42, height: 42, borderRadius: "50%", flexShrink: 0,
+                    background: `${accent}1A`, border: `1.5px solid ${accent}44`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "0.9rem", fontWeight: 700, color: accent
                   }}>
-                  {copied ? <Check size={13} /> : <Link2 size={13} />}
-                  {copied ? "Copiado!" : "Copiar link"}
-                </button>
-                <button onClick={() => remover(f.id)} className="btn-sm"
-                  style={{ padding: "8px 10px", borderRadius: 9, background: "#FFF1F2", border: "none", color: "#BE123C", cursor: "pointer", display: "flex" }}>
-                  <Trash2 size={14} />
-                </button>
+                    {f.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p style={{ fontWeight: 600, color: "#E2E8F0", fontSize: "0.95rem", marginBottom: 3 }}>{f.name}</p>
+                    <p className="font-mono" style={{ fontSize: "0.71rem", color: "#334155", wordBreak: "break-all" }}>{link}</p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={() => copiarLink(f.slug)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 9,
+                      background: copied ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.05)",
+                      border: `1px solid ${copied ? "rgba(16,185,129,0.3)" : "rgba(255,255,255,0.09)"}`,
+                      color: copied ? "#34D399" : "#94A3B8",
+                      fontSize: "0.81rem", fontWeight: 500, cursor: "pointer", transition: "all .2s"
+                    }}>
+                    {copied ? <Check size={13} /> : <Link2 size={13} />}
+                    {copied ? "Copiado!" : "Copiar link"}
+                  </button>
+                  <button onClick={() => remover(f.id)}
+                    style={{ padding: "8px 10px", borderRadius: 9, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)", color: "#F87171", cursor: "pointer", display: "flex", transition: "all .18s" }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = "rgba(239,68,68,0.15)"}
+                    onMouseLeave={(e) => e.currentTarget.style.background = "rgba(239,68,68,0.08)"}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
             </div>
           );
         })}
 
         {funcionarios.length === 0 && (
-          <div style={{ textAlign: "center", padding: "48px 0" }}>
-            <Users size={32} color="#D4A04A" style={{ margin: "0 auto 12px", display: "block", opacity: 0.25 }} />
-            <p style={{ color: "#9A8A7A", fontSize: "0.9rem" }}>Nenhum funcionário cadastrado ainda.</p>
+          <div style={{ textAlign: "center", padding: "60px 0" }}>
+            <Users size={32} color="#1E293B" style={{ margin: "0 auto 12px", display: "block" }} />
+            <p style={{ color: "#334155", fontSize: "0.9rem" }}>Nenhum funcionário cadastrado ainda.</p>
           </div>
         )}
       </div>
