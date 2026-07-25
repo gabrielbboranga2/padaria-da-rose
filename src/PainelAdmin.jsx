@@ -423,10 +423,22 @@ function AbaPedidos() {
           </h2>
           <p style={{ fontSize: "0.83rem", color: "#475569" }}>Monitoramento em tempo real</p>
         </div>
-        <button onClick={carregarPedidos} className="btn-ghost"
-          style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", borderRadius: 100, fontSize: "0.82rem" }}>
-          <RefreshCw size={13} /> Atualizar
-        </button>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={async () => {
+            if (!window.confirm("Resetar a numeração dos pedidos para #1? Isso apaga TODOS os pedidos anteriores.")) return;
+            await supabase.rpc("reset_order_sequence");
+            await supabase.from("order_items").delete().neq("id", 0);
+            await supabase.from("orders").delete().neq("id", 0);
+            carregarPedidos();
+          }} className="btn-ghost"
+            style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", borderRadius: 100, fontSize: "0.82rem", borderColor: "rgba(239,68,68,0.25)", color: "#F87171" }}>
+            <AlertCircle size={13} /> Resetar numeração
+          </button>
+          <button onClick={carregarPedidos} className="btn-ghost"
+            style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", borderRadius: 100, fontSize: "0.82rem" }}>
+            <RefreshCw size={13} /> Atualizar
+          </button>
+        </div>
       </div>
 
       {/* Stats grid */}
