@@ -89,18 +89,21 @@ export default function SiteCliente() {
     e.preventDefault();
     setStep("enviando");
 
-    const { data: order, error } = await supabase
-      .from("orders")
-      .insert({
-        customer_name: customer.nome,
-        customer_phone: customer.telefone,
-        pickup_time: customer.retirada,
-        notes: customer.obs,
-        employee_slug: employeeSlug,
-        total,
-      })
-      .select()
-      .single();
+    const items = cartItems.map((i) => ({
+      product_name: i.name,
+      qty: i.qty,
+      unit_price: i.price,
+    }));
+
+    const { data: orderResult, error } = await supabase.rpc("create_order", {
+      p_customer_name: customer.nome,
+      p_customer_phone: customer.telefone,
+      p_pickup_time: customer.retirada,
+      p_notes: customer.obs,
+      p_employee_slug: employeeSlug,
+      p_total: total,
+      p_items: items,
+    });
 
     if (error) {
       console.error("Erro ao enviar pedido:", error);
@@ -121,35 +124,8 @@ export default function SiteCliente() {
       return;
     }
 
-    const items = cartItems.map((i) => ({
-      order_id: order.id,
-      product_name: i.name,
-      qty: i.qty,
-      unit_price: i.price,
-    }));
-
-    const { error: itemsError } = await supabase.from("order_items").insert(items);
-
-    if (itemsError) {
-      console.error("Erro ao enviar itens do pedido:", itemsError);
-      setConnectionOk(false);
-      const fallback = {
-        id: order.id.toString(),
-        customer: { ...customer },
-        items: [...cartItems],
-        total,
-        created_at: new Date().toLocaleString("pt-BR"),
-      };
-      const saved = JSON.parse(localStorage.getItem("orders_fallback") || "[]");
-      saved.push(fallback);
-      localStorage.setItem("orders_fallback", JSON.stringify(saved));
-      setLocalOrder(fallback);
-      setOrderError(itemsError.message);
-      setStep("fallback");
-      return;
-    }
-
-    setOrderNumber(order.id);
+    const orderId = Array.isArray(orderResult) ? orderResult[0]?.create_order?.id || orderResult[0]?.id : orderResult?.id || orderResult;
+    setOrderNumber(orderId);
     setStep("enviado");
   };
 
