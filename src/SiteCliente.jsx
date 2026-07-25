@@ -1,21 +1,41 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Wheat, Flame, Cookie, Plus, Minus, Phone, Clock, X, Check, ShoppingBag, AlertTriangle, Copy, Star, MapPin } from "lucide-react";
+import { Wheat, Flame, Cookie, Plus, Minus, Phone, Clock, X, Check, ShoppingBag, AlertTriangle, Copy, Star, MapPin, Sparkles, Heart } from "lucide-react";
 import { supabase } from "./lib/supabaseClient";
 
 const CATEGORIES = [
-  { id: "paes", label: "Pães", icon: Wheat },
-  { id: "domingo", label: "Domingo", icon: Flame },
-  { id: "bolos", label: "Bolos & Doces", icon: Cookie },
+  { id: "paes", label: "Pães", icon: Wheat, gradient: "linear-gradient(135deg, #F59E0B, #F97316)" },
+  { id: "domingo", label: "Domingo", icon: Flame, gradient: "linear-gradient(135deg, #EF4444, #EC4899)" },
+  { id: "bolos", label: "Bolos & Doces", icon: Cookie, gradient: "linear-gradient(135deg, #8B5CF6, #D946EF)" },
 ];
 
 const money = (v) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 function BreadDivider() {
   return (
-    <div className="flex items-center justify-center gap-3 py-4">
-      <span className="h-px flex-1" style={{ background: "linear-gradient(90deg, transparent, #D4A04A66, transparent)" }} />
-      <Wheat size={16} color="#D4A04A" strokeWidth={1.5} />
-      <span className="h-px flex-1" style={{ background: "linear-gradient(90deg, transparent, #D4A04A66, transparent)" }} />
+    <div className="flex items-center justify-center gap-3 py-3">
+      <span className="h-px flex-1" style={{ background: "linear-gradient(90deg, transparent, rgba(245,158,11,0.4), transparent)" }} />
+      <div style={{ width: 6, height: 6, borderRadius: "50%", background: "linear-gradient(135deg, #F59E0B, #F97316)", boxShadow: "0 0 8px rgba(245,158,11,0.5)" }} />
+      <span className="h-px flex-1" style={{ background: "linear-gradient(90deg, transparent, rgba(245,158,11,0.4), transparent)" }} />
+    </div>
+  );
+}
+
+function FloatingParticles() {
+  return (
+    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
+      {[...Array(6)].map((_, i) => (
+        <div key={i} style={{
+          position: "absolute",
+          width: 4 + Math.random() * 6,
+          height: 4 + Math.random() * 6,
+          borderRadius: "50%",
+          background: `rgba(245,158,11,${0.15 + Math.random() * 0.2})`,
+          top: `${10 + Math.random() * 80}%`,
+          left: `${5 + Math.random() * 90}%`,
+          animation: `floatUp ${4 + Math.random() * 4}s ease-in-out infinite`,
+          animationDelay: `${Math.random() * 3}s`
+        }} />
+      ))}
     </div>
   );
 }
@@ -146,65 +166,86 @@ TOTAL: ${money(localOrder.total)}`;
   };
 
   return (
-    <div className="min-h-screen w-full" style={{ background: "#FAF6F1", fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen w-full" style={{ background: "#FFF8F0", fontFamily: "'Inter', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
         .font-display { font-family: 'Playfair Display', serif; }
         .font-mono-ticket { font-family: 'IBM Plex Mono', monospace; }
 
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes popIn { 0% { transform: scale(0.8); opacity:0; } 70% { transform: scale(1.05); } 100% { transform: scale(1); opacity:1; } }
+        @keyframes popIn { 0% { transform: scale(0.75); opacity:0; } 60% { transform: scale(1.06); } 100% { transform: scale(1); opacity:1; } }
         @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         @keyframes slideUp { from { transform: translateY(100%); opacity:0; } to { transform: translateY(0); opacity:1; } }
+        @keyframes floatUp { 0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.4; } 50% { transform: translateY(-20px) rotate(180deg); opacity: 0.8; } }
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 20px rgba(245,158,11,0.3); } 50% { box-shadow: 0 0 40px rgba(245,158,11,0.5); } }
+        @keyframes borderShine { 0% { border-color: rgba(245,158,11,0.2); } 50% { border-color: rgba(245,158,11,0.5); } 100% { border-color: rgba(245,158,11,0.2); } }
+        @keyframes priceGlow { 0%, 100% { text-shadow: 0 0 4px rgba(220,38,38,0.3); } 50% { text-shadow: 0 0 12px rgba(220,38,38,0.5); } }
 
-        .animate-fade-up { animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .animate-fade-up { animation: fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
         .animate-fade-in { animation: fadeIn 0.4s ease both; }
-        .animate-pop-in { animation: popIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .animate-pop-in { animation: popIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
         .animate-pulse-slow { animation: pulse 2.5s ease-in-out infinite; }
         .animate-slide-up { animation: slideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .animate-glow { animation: glow 3s ease-in-out infinite; }
+        .animate-border-shine { animation: borderShine 3s ease-in-out infinite; }
 
-        .card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 20px 40px rgba(93, 60, 46, 0.13) !important; }
+        .card-hover { transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease, border-color 0.35s ease; }
+        .card-hover:hover { transform: translateY(-5px) scale(1.01); box-shadow: 0 24px 48px rgba(180,83,9,0.15) !important; border-color: rgba(245,158,11,0.3) !important; }
         .btn-press { transition: all 0.15s ease; }
-        .btn-press:active { transform: scale(0.96); }
-        .btn-hover:hover { filter: brightness(1.05); }
+        .btn-press:active { transform: scale(0.95); }
+        .btn-hover:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
-        input:focus, textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(212, 160, 74, 0.18); }
+        input:focus, textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(245,158,11,0.2) !important; border-color: #F59E0B !important; }
         input::placeholder, textarea::placeholder { color: #C5B5A5; }
 
-        .category-pill { transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
-        .category-pill:hover { transform: translateY(-1px); }
+        .category-pill { transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+        .category-pill:hover { transform: translateY(-2px); }
+        .category-pill.active { transform: scale(1.05); }
 
-        .gold-shine {
-          background: linear-gradient(90deg, #D4A04A 0%, #F0C96A 40%, #D4A04A 60%, #B8883A 100%);
+        .gradient-text {
+          background: linear-gradient(135deg, #F59E0B, #EF4444, #F59E0B);
           background-size: 200% auto;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
+          animation: shimmer 3s linear infinite;
+        }
+
+        .hero-pattern {
+          background-image: 
+            radial-gradient(circle at 20% 80%, rgba(245,158,11,0.12) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(239,68,68,0.08) 0%, transparent 50%),
+            radial-gradient(circle at 50% 50%, rgba(139,92,246,0.05) 0%, transparent 60%);
         }
       `}</style>
 
       {/* ═══ HEADER ═══ */}
-      <header style={{ background: "linear-gradient(160deg, #1C0F08 0%, #2A1610 45%, #3A2218 100%)", position: "relative", overflow: "hidden" }}>
-        {/* Decorative background elements */}
+      <header style={{ 
+        background: "linear-gradient(160deg, #1C0A00 0%, #3D1C0A 35%, #5C2E0E 65%, #7A3B12 100%)", 
+        position: "relative", 
+        overflow: "hidden" 
+      }}>
+        <FloatingParticles />
+        
+        {/* Decorative gradient orbs */}
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-          <div style={{ position: "absolute", top: "-40%", left: "-10%", width: "60%", height: "160%", background: "radial-gradient(ellipse, rgba(232,195,106,0.06) 0%, transparent 65%)" }} />
-          <div style={{ position: "absolute", top: "-20%", right: "-5%", width: "50%", height: "120%", background: "radial-gradient(ellipse, rgba(212,160,74,0.04) 0%, transparent 60%)" }} />
-          {/* Horizontal line accent */}
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "1px", background: "linear-gradient(90deg, transparent, rgba(232,195,106,0.3), transparent)" }} />
+          <div style={{ position: "absolute", top: "-50%", left: "-15%", width: "70%", height: "180%", background: "radial-gradient(ellipse, rgba(245,158,11,0.1) 0%, transparent 60%)" }} />
+          <div style={{ position: "absolute", top: "-30%", right: "-10%", width: "55%", height: "140%", background: "radial-gradient(ellipse, rgba(239,68,68,0.06) 0%, transparent 55%)" }} />
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "2px", background: "linear-gradient(90deg, transparent, rgba(245,158,11,0.6), rgba(239,68,68,0.4), transparent)" }} />
         </div>
 
-        <div className="max-w-5xl mx-auto px-6 pt-16 pb-20 flex flex-col items-center text-center relative" style={{ zIndex: 1 }}>
-          {/* Logo — sem borda extra, com brilho suave */}
-          <div className="mb-8 animate-fade-up" style={{ animationDelay: "0s" }}>
+        <div className="max-w-5xl mx-auto px-6 pt-14 pb-20 flex flex-col items-center text-center relative" style={{ zIndex: 1 }}>
+          {/* Logo */}
+          <div className="mb-6 animate-fade-up" style={{ animationDelay: "0s" }}>
             <div style={{
-              width: 120, height: 120,
+              width: 130, height: 130,
               borderRadius: "50%",
               overflow: "hidden",
-              boxShadow: "0 0 0 1px rgba(232,195,106,0.25), 0 12px 40px rgba(0,0,0,0.45)",
-              position: "relative"
+              boxShadow: "0 0 0 3px rgba(245,158,11,0.4), 0 0 40px rgba(245,158,11,0.2), 0 16px 48px rgba(0,0,0,0.5)",
+              position: "relative",
+              animation: "glow 3s ease-in-out infinite"
             }}>
               <img
                 src="/logo.png"
@@ -215,63 +256,66 @@ TOTAL: ${money(localOrder.total)}`;
           </div>
 
           <h1 className="font-display animate-fade-up" style={{
-            fontSize: "clamp(2.2rem, 6vw, 3.8rem)",
-            fontWeight: 700,
+            fontSize: "clamp(2.5rem, 7vw, 4.2rem)",
+            fontWeight: 800,
             color: "#FFF8F0",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.1,
-            animationDelay: "0.08s"
+            letterSpacing: "-0.03em",
+            lineHeight: 1.05,
+            animationDelay: "0.08s",
+            textShadow: "0 2px 20px rgba(0,0,0,0.3)"
           }}>
-            Padaria <span style={{ color: "#E8C36A" }}>da Rose</span>
+            Padaria <span className="gradient-text">da Rose</span>
           </h1>
 
-          {/* Divider ornament */}
+          {/* Decorative divider */}
           <div className="flex items-center gap-4 my-5 animate-fade-up" style={{ animationDelay: "0.14s" }}>
-            <div style={{ height: 1, width: 48, background: "linear-gradient(90deg, transparent, rgba(232,195,106,0.5))" }} />
-            <Wheat size={15} color="rgba(232,195,106,0.7)" strokeWidth={1.5} />
-            <div style={{ height: 1, width: 48, background: "linear-gradient(90deg, rgba(232,195,106,0.5), transparent)" }} />
+            <div style={{ height: 2, width: 52, background: "linear-gradient(90deg, transparent, #F59E0B)" }} />
+            <Sparkles size={18} color="#F59E0B" style={{ filter: "drop-shadow(0 0 4px rgba(245,158,11,0.5))" }} />
+            <div style={{ height: 2, width: 52, background: "linear-gradient(90deg, #F59E0B, transparent)" }} />
           </div>
 
           <p className="animate-fade-up" style={{
-            color: "#C4A98E",
-            fontSize: "1.05rem",
-            maxWidth: 400,
-            lineHeight: 1.65,
-            animationDelay: "0.18s"
+            color: "#D4B896",
+            fontSize: "1.1rem",
+            maxWidth: 420,
+            lineHeight: 1.7,
+            animationDelay: "0.18s",
+            fontWeight: 300
           }}>
-            Pães artesanais, bolos e doces feitos com carinho.<br />
-            <span style={{ color: "#8A7A6A", fontSize: "0.9rem" }}>Encomende e retire na padaria.</span>
+            Pães artesanais, bolos e doces feitos com amor.<br />
+            <span style={{ color: "#A08068", fontSize: "0.95rem", fontWeight: 400 }}>Encomende direto pelo celular e retire na padaria.</span>
           </p>
 
           {/* Info chips */}
           <div className="flex flex-wrap items-center justify-center gap-3 mt-7 animate-fade-up" style={{ animationDelay: "0.22s" }}>
             <a href="tel:+5518991914512" style={{
-              display: "flex", alignItems: "center", gap: 7,
-              padding: "9px 18px", borderRadius: 100,
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(232,195,106,0.18)",
-              color: "#C4A98E", fontSize: "0.85rem",
-              textDecoration: "none", transition: "all 0.2s"
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "10px 20px", borderRadius: 100,
+              background: "rgba(245,158,11,0.12)",
+              border: "1px solid rgba(245,158,11,0.3)",
+              color: "#F5D89A", fontSize: "0.88rem",
+              textDecoration: "none", transition: "all 0.25s",
+              backdropFilter: "blur(8px)"
             }}>
-              <Phone size={13} color="#E8C36A" /> (18) 99191-4512
+              <Phone size={14} color="#F59E0B" /> (18) 99191-4512
             </a>
             <span style={{
-              display: "flex", alignItems: "center", gap: 7,
-              padding: "9px 18px", borderRadius: 100,
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(232,195,106,0.18)",
-              color: "#C4A98E", fontSize: "0.85rem"
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "10px 20px", borderRadius: 100,
+              background: "rgba(239,68,68,0.1)",
+              border: "1px solid rgba(239,68,68,0.25)",
+              color: "#F5B8A8", fontSize: "0.88rem"
             }}>
-              <Clock size={13} color="#E8C36A" /> Ter–Dom, 6h–19h
+              <Clock size={14} color="#EF4444" /> Ter–Dom, 6h–19h
             </span>
           </div>
         </div>
 
         {/* Wave transition */}
         <div style={{
-          height: 52,
-          background: "#FAF6F1",
-          clipPath: "ellipse(60% 100% at 50% 100%)",
+          height: 56,
+          background: "#FFF8F0",
+          clipPath: "ellipse(62% 100% at 50% 100%)",
           marginTop: -1
         }} />
       </header>
@@ -279,10 +323,14 @@ TOTAL: ${money(localOrder.total)}`;
       {/* ═══ OFFLINE BANNER ═══ */}
       {!connectionOk && (
         <div className="max-w-5xl mx-auto px-5 pt-4">
-          <div className="rounded-2xl p-4 flex items-start gap-3 animate-fade-up" style={{ background: "#FFF3E0", border: "1px solid #FFD08A" }}>
-            <AlertTriangle size={17} color="#D46B00" style={{ marginTop: 1, flexShrink: 0 }} />
-            <p className="text-sm" style={{ color: "#5C3D2E" }}>
-              <strong style={{ color: "#B84A00" }}>Sistema offline.</strong> Seu pedido será salvo localmente. Ao finalizar, encaminhe os detalhes para a padaria.
+          <div className="rounded-2xl p-4 flex items-start gap-3 animate-fade-up" style={{ 
+            background: "linear-gradient(135deg, #FEF3C7, #FDE68A)", 
+            border: "1px solid #F59E0B",
+            boxShadow: "0 4px 20px rgba(245,158,11,0.2)"
+          }}>
+            <AlertTriangle size={18} color="#B45309" style={{ marginTop: 1, flexShrink: 0 }} />
+            <p className="text-sm" style={{ color: "#78350F" }}>
+              <strong style={{ color: "#92400E" }}>Sistema offline.</strong> Seu pedido será salvo localmente. Ao finalizar, encaminhe os detalhes para a padaria.
             </p>
           </div>
         </div>
@@ -292,10 +340,10 @@ TOTAL: ${money(localOrder.total)}`;
       {step === "menu" && (
         <main className="max-w-5xl mx-auto px-4 sm:px-6 pb-32 animate-fade-up">
           {/* Category nav */}
-          <nav className="flex gap-2.5 overflow-x-auto py-6 sticky top-0 z-20" style={{
-            background: "rgba(250, 246, 241, 0.97)",
-            backdropFilter: "blur(12px)",
-            borderBottom: "1px solid rgba(212, 160, 74, 0.1)",
+          <nav className="flex gap-3 overflow-x-auto py-6 sticky top-0 z-20" style={{
+            background: "rgba(255,248,240,0.95)",
+            backdropFilter: "blur(16px)",
+            borderBottom: "1px solid rgba(245,158,11,0.12)",
             scrollbarWidth: "none"
           }}>
             {CATEGORIES.map((c) => {
@@ -303,15 +351,17 @@ TOTAL: ${money(localOrder.total)}`;
               const isActive = activeCat === c.id;
               return (
                 <button key={c.id} onClick={() => setActiveCat(c.id)}
-                  className="category-pill flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap"
+                  className="category-pill flex items-center gap-2.5 px-6 py-3 rounded-full text-sm font-bold whitespace-nowrap"
                   style={{
-                    background: isActive ? "linear-gradient(135deg, #2D1810, #4A2C1A)" : "#FFFFFF",
-                    color: isActive ? "#FFF8F0" : "#5C3D2E",
-                    border: "1px solid",
-                    borderColor: isActive ? "transparent" : "rgba(212, 160, 74, 0.18)",
-                    boxShadow: isActive ? "0 6px 18px rgba(45,24,16,0.22)" : "0 1px 4px rgba(0,0,0,0.05)"
+                    background: isActive ? c.gradient : "#FFFFFF",
+                    color: isActive ? "#FFFFFF" : "#5C3D2E",
+                    border: isActive ? "none" : "1.5px solid rgba(245,158,11,0.18)",
+                    boxShadow: isActive 
+                      ? `0 8px 24px rgba(245,158,11,0.35), 0 0 0 1px rgba(255,255,255,0.2) inset` 
+                      : "0 2px 8px rgba(0,0,0,0.06)"
                   }}>
-                  <Icon size={15} /> {c.label}
+                  <Icon size={16} /> {c.label}
+                  {isActive && <Sparkles size={12} style={{ marginLeft: 2 }} />}
                 </button>
               );
             })}
@@ -319,8 +369,8 @@ TOTAL: ${money(localOrder.total)}`;
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-28 gap-4">
-              <Wheat size={36} color="#D4A04A" className="animate-pulse-slow" />
-              <span style={{ color: "#9A8A7A", fontSize: "0.9rem" }}>Carregando cardápio…</span>
+              <Wheat size={42} color="#F59E0B" className="animate-pulse-slow" style={{ filter: "drop-shadow(0 0 8px rgba(245,158,11,0.4))" }} />
+              <span style={{ color: "#8A7A6A", fontSize: "0.95rem", fontWeight: 500 }}>Carregando cardápio…</span>
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
@@ -328,84 +378,90 @@ TOTAL: ${money(localOrder.total)}`;
                 <div key={p.id} className="card-hover rounded-2xl overflow-hidden"
                   style={{
                     background: "#FFFFFF",
-                    border: "1px solid rgba(212,160,74,0.10)",
-                    boxShadow: "0 2px 12px rgba(93,60,46,0.06)",
+                    border: "1.5px solid rgba(245,158,11,0.12)",
+                    boxShadow: "0 4px 20px rgba(120,53,15,0.07)",
                     opacity: p.available ? 1 : 0.5,
-                    animation: `fadeUp 0.4s ease-out ${idx * 0.07}s both`
+                    animation: `fadeUp 0.45s ease-out ${idx * 0.08}s both`
                   }}>
                   {/* Top accent bar */}
                   <div style={{
-                    height: 3,
+                    height: 4,
                     background: p.available
-                      ? "linear-gradient(90deg, #C9893A, #E8C36A, #C9893A)"
+                      ? "linear-gradient(90deg, #F59E0B, #EF4444, #F59E0B)"
                       : "#E8E0D8"
                   }} />
-                  <div style={{ padding: "20px 20px 18px" }}>
+                  <div style={{ padding: "22px 22px 20px" }}>
                     <div className="flex items-start justify-between gap-2">
                       <div style={{ flex: 1 }}>
-                        <h3 className="font-display" style={{ fontSize: "1.15rem", fontWeight: 600, color: "#2D1810", lineHeight: 1.2 }}>{p.name}</h3>
+                        <h3 className="font-display" style={{ fontSize: "1.2rem", fontWeight: 700, color: "#1C0A00", lineHeight: 1.2 }}>{p.name}</h3>
                         {p.description && (
-                          <p style={{ fontSize: "0.82rem", color: "#8A7A6A", marginTop: 6, lineHeight: 1.55 }}>{p.description}</p>
+                          <p style={{ fontSize: "0.84rem", color: "#7A6B5D", marginTop: 6, lineHeight: 1.55 }}>{p.description}</p>
                         )}
                       </div>
                       {!p.available && (
                         <span style={{
                           fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.06em",
-                          padding: "3px 10px", borderRadius: 100,
-                          background: "rgba(180,70,70,0.07)", color: "#B84A4A",
-                          border: "1px solid rgba(180,70,70,0.14)", flexShrink: 0,
-                          fontFamily: "'IBM Plex Mono', monospace", fontWeight: 500
+                          padding: "4px 12px", borderRadius: 100,
+                          background: "linear-gradient(135deg, rgba(239,68,68,0.1), rgba(236,72,153,0.08))", color: "#DC2626",
+                          border: "1px solid rgba(239,68,68,0.2)", flexShrink: 0,
+                          fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600
                         }}>
                           Esgotado
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between mt-5 pt-4" style={{ borderTop: "1px solid rgba(212,160,74,0.1)" }}>
+                    <div className="flex items-center justify-between mt-5 pt-4" style={{ borderTop: "1.5px dashed rgba(245,158,11,0.15)" }}>
                       <div>
-                        <span className="font-mono-ticket" style={{ fontSize: "1.2rem", fontWeight: 700, color: "#B85C1E" }}>
+                        <span className="font-mono-ticket" style={{ 
+                          fontSize: "1.3rem", 
+                          fontWeight: 700, 
+                          color: "#DC2626",
+                          animation: "priceGlow 3s ease-in-out infinite"
+                        }}>
                           {money(p.price)}
                         </span>
-                        <span style={{ fontSize: "0.75rem", color: "#9A8A7A", marginLeft: 4 }}>/ {p.unit}</span>
+                        <span style={{ fontSize: "0.78rem", color: "#9A8A7A", marginLeft: 4 }}>/ {p.unit}</span>
                       </div>
                       {p.available ? (
                         (cart[p.id] || 0) > 0 ? (
-                          <div className="flex items-center gap-2.5">
+                          <div className="flex items-center gap-3">
                             <button onClick={() => removeItem(p.id)} className="btn-press"
                               style={{
-                                width: 34, height: 34, borderRadius: "50%",
-                                background: "#F2E8DC", border: "1px solid rgba(212,160,74,0.2)",
-                                color: "#5C3D2E", display: "flex", alignItems: "center", justifyContent: "center",
-                                cursor: "pointer"
+                                width: 36, height: 36, borderRadius: "50%",
+                                background: "#FEF3C7", border: "1.5px solid rgba(245,158,11,0.3)",
+                                color: "#92400E", display: "flex", alignItems: "center", justifyContent: "center",
+                                cursor: "pointer", transition: "all 0.2s"
                               }}>
-                              <Minus size={13} />
+                              <Minus size={14} />
                             </button>
-                            <span className="font-mono-ticket" style={{ fontSize: "1.05rem", fontWeight: 700, color: "#2D1810", width: 24, textAlign: "center" }}>{cart[p.id]}</span>
+                            <span className="font-mono-ticket" style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1C0A00", width: 28, textAlign: "center" }}>{cart[p.id]}</span>
                             <button onClick={() => addItem(p.id)} className="btn-press"
                               style={{
-                                width: 34, height: 34, borderRadius: "50%",
-                                background: "linear-gradient(135deg, #C9893A, #D4A04A)",
+                                width: 36, height: 36, borderRadius: "50%",
+                                background: "linear-gradient(135deg, #F59E0B, #F97316)",
                                 color: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center",
-                                boxShadow: "0 3px 10px rgba(212,160,74,0.35)", cursor: "pointer", border: "none"
+                                boxShadow: "0 4px 14px rgba(245,158,11,0.4)", cursor: "pointer", border: "none"
                               }}>
-                              <Plus size={13} />
+                              <Plus size={14} />
                             </button>
                           </div>
                         ) : (
                           <button onClick={() => addItem(p.id)} className="btn-press btn-hover"
                             style={{
-                              fontSize: "0.83rem", fontWeight: 600,
-                              padding: "9px 18px", borderRadius: 100,
-                              background: "linear-gradient(135deg, #2D1810, #4A2C1A)",
-                              color: "#FFF8F0", border: "none",
-                              boxShadow: "0 4px 14px rgba(45,24,16,0.22)",
-                              display: "flex", alignItems: "center", gap: 6, cursor: "pointer"
+                              fontSize: "0.85rem", fontWeight: 700,
+                              padding: "10px 20px", borderRadius: 100,
+                              background: "linear-gradient(135deg, #1C0A00, #3D1C0A)",
+                              color: "#F5D89A", border: "none",
+                              boxShadow: "0 4px 16px rgba(28,10,0,0.28)",
+                              display: "flex", alignItems: "center", gap: 6, cursor: "pointer",
+                              transition: "all 0.25s"
                             }}>
-                            <Plus size={13} /> Adicionar
+                            <Plus size={14} /> Adicionar
                           </button>
                         )
                       ) : (
-                        <span style={{ fontSize: "0.78rem", color: "#9A8A7A", padding: "6px 12px", background: "rgba(154,138,122,0.07)", borderRadius: 100 }}>
+                        <span style={{ fontSize: "0.8rem", color: "#9A8A7A", padding: "7px 14px", background: "rgba(154,138,122,0.08)", borderRadius: 100, fontWeight: 500 }}>
                           Em breve
                         </span>
                       )}
@@ -416,11 +472,17 @@ TOTAL: ${money(localOrder.total)}`;
 
               {products.filter((p) => p.category === activeCat).length === 0 && (
                 <div className="sm:col-span-2 lg:col-span-3 text-center py-20">
-                  <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(212,160,74,0.07)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-                    <Cookie size={30} color="#D4A04A" />
+                  <div style={{ 
+                    width: 80, height: 80, borderRadius: "50%", 
+                    background: "linear-gradient(135deg, rgba(245,158,11,0.1), rgba(239,68,68,0.08))", 
+                    display: "flex", alignItems: "center", justifyContent: "center", 
+                    margin: "0 auto 18px",
+                    boxShadow: "0 0 30px rgba(245,158,11,0.15)"
+                  }}>
+                    <Cookie size={34} color="#F59E0B" />
                   </div>
-                  <p className="font-display" style={{ color: "#5C3D2E", fontSize: "1.1rem" }}>Nenhum produto nesta categoria.</p>
-                  <p style={{ color: "#9A8A7A", fontSize: "0.85rem", marginTop: 6 }}>Volte em breve para conferir as novidades!</p>
+                  <p className="font-display" style={{ color: "#1C0A00", fontSize: "1.15rem", fontWeight: 600 }}>Nenhum produto nesta categoria.</p>
+                  <p style={{ color: "#9A8A7A", fontSize: "0.88rem", marginTop: 8 }}>Volte em breve para conferir as novidades!</p>
                 </div>
               )}
             </div>
@@ -433,37 +495,42 @@ TOTAL: ${money(localOrder.total)}`;
         <main className="max-w-lg mx-auto px-5 py-12 animate-fade-up">
           <button onClick={() => setStep("menu")}
             className="btn-press flex items-center gap-2.5 mb-8 group"
-            style={{ background: "none", border: "none", color: "#5C3D2E", cursor: "pointer", fontSize: "0.9rem", fontWeight: 500 }}>
+            style={{ background: "none", border: "none", color: "#5C3D2E", cursor: "pointer", fontSize: "0.92rem", fontWeight: 600 }}>
             <span style={{
-              width: 34, height: 34, borderRadius: "50%", background: "#EDE0D4",
+              width: 36, height: 36, borderRadius: "50%", 
+              background: "linear-gradient(135deg, #FEF3C7, #FDE68A)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              transition: "transform 0.2s"
+              transition: "transform 0.2s", fontSize: "1.1rem"
             }}>←</span>
             Voltar ao cardápio
           </button>
 
           <div style={{
             background: "#FFFFFF",
-            borderRadius: 20,
-            border: "1px solid rgba(212,160,74,0.14)",
-            boxShadow: "0 8px 36px rgba(93,60,46,0.09)",
+            borderRadius: 24,
+            border: "1.5px solid rgba(245,158,11,0.15)",
+            boxShadow: "0 12px 48px rgba(120,53,15,0.1), 0 0 0 1px rgba(245,158,11,0.05)",
             overflow: "hidden"
           }}>
-            {/* Form header */}
-            <div style={{ padding: "28px 28px 0" }}>
-              <h2 className="font-display" style={{ fontSize: "1.75rem", fontWeight: 700, color: "#2D1810", marginBottom: 6 }}>Seus dados</h2>
-              <p style={{ fontSize: "0.88rem", color: "#7A6B5D", marginBottom: 28 }}>Para o padeiro saber quem retira e quando.</p>
+            {/* Form header with gradient */}
+            <div style={{ 
+              padding: "32px 32px 0",
+              background: "linear-gradient(135deg, rgba(245,158,11,0.05), rgba(239,68,68,0.03))",
+              borderBottom: "1px solid rgba(245,158,11,0.08)"
+            }}>
+              <h2 className="font-display" style={{ fontSize: "1.85rem", fontWeight: 800, color: "#1C0A00", marginBottom: 6 }}>Seus dados</h2>
+              <p style={{ fontSize: "0.9rem", color: "#7A6B5D", marginBottom: 28 }}>Para o padeiro saber quem retira e quando.</p>
             </div>
 
-            <form onSubmit={submitOrder} style={{ padding: "0 28px 28px" }}>
+            <form onSubmit={submitOrder} style={{ padding: "28px 32px 32px" }}>
               {[
-                { label: "Nome completo", key: "nome", placeholder: "Seu nome completo", type: "text" },
-                { label: "Telefone", key: "telefone", placeholder: "(18) 9XXXX-XXXX", type: "tel" },
-                { label: "Horário de retirada", key: "retirada", placeholder: "Ex: hoje às 17h", type: "text" },
+                { label: "Nome completo", key: "nome", placeholder: "Seu nome completo", type: "text", icon: "👤" },
+                { label: "Telefone", key: "telefone", placeholder: "(18) 9XXXX-XXXX", type: "tel", icon: "📱" },
+                { label: "Horário de retirada", key: "retirada", placeholder: "Ex: hoje às 17h", type: "text", icon: "⏰" },
               ].map((field) => (
-                <div key={field.key} style={{ marginBottom: 18 }}>
-                  <label style={{ display: "block", fontSize: "0.73rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#5C3D2E", marginBottom: 7 }}>
-                    {field.label}
+                <div key={field.key} style={{ marginBottom: 20 }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#78350F", marginBottom: 8 }}>
+                    {field.icon} {field.label}
                   </label>
                   <input
                     required
@@ -472,20 +539,18 @@ TOTAL: ${money(localOrder.total)}`;
                     onChange={(e) => setCustomer({ ...customer, [field.key]: e.target.value })}
                     placeholder={field.placeholder}
                     style={{
-                      width: "100%", padding: "12px 16px", borderRadius: 12,
-                      border: "1.5px solid rgba(212,160,74,0.2)",
-                      background: "#FDFBF8", color: "#2D1810", fontSize: "0.93rem",
-                      transition: "border-color 0.2s, box-shadow 0.2s", boxSizing: "border-box"
+                      width: "100%", padding: "14px 18px", borderRadius: 14,
+                      border: "1.5px solid rgba(245,158,11,0.2)",
+                      background: "#FFFBF5", color: "#1C0A00", fontSize: "0.95rem",
+                      transition: "all 0.25s", boxSizing: "border-box"
                     }}
-                    onFocus={(e) => { e.target.style.borderColor = "#D4A04A"; e.target.style.boxShadow = "0 0 0 3px rgba(212,160,74,0.12)"; }}
-                    onBlur={(e) => { e.target.style.borderColor = "rgba(212,160,74,0.2)"; e.target.style.boxShadow = "none"; }}
                   />
                 </div>
               ))}
 
-              <div style={{ marginBottom: 24 }}>
-                <label style={{ display: "block", fontSize: "0.73rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#5C3D2E", marginBottom: 7 }}>
-                  Observações <span style={{ color: "#9A8A7A", fontWeight: 400, textTransform: "none" }}>(opcional)</span>
+              <div style={{ marginBottom: 26 }}>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#78350F", marginBottom: 8 }}>
+                  💬 Observações <span style={{ color: "#9A8A7A", fontWeight: 400, textTransform: "none" }}>(opcional)</span>
                 </label>
                 <textarea
                   value={customer.obs}
@@ -493,47 +558,47 @@ TOTAL: ${money(localOrder.total)}`;
                   rows={3}
                   placeholder="Ex: pão de queijo sem sal, sem glúten…"
                   style={{
-                    width: "100%", padding: "12px 16px", borderRadius: 12,
-                    border: "1.5px solid rgba(212,160,74,0.2)",
-                    background: "#FDFBF8", color: "#2D1810", fontSize: "0.93rem",
-                    resize: "none", transition: "border-color 0.2s, box-shadow 0.2s", boxSizing: "border-box"
+                    width: "100%", padding: "14px 18px", borderRadius: 14,
+                    border: "1.5px solid rgba(245,158,11,0.2)",
+                    background: "#FFFBF5", color: "#1C0A00", fontSize: "0.95rem",
+                    resize: "none", transition: "all 0.25s", boxSizing: "border-box"
                   }}
-                  onFocus={(e) => { e.target.style.borderColor = "#D4A04A"; e.target.style.boxShadow = "0 0 0 3px rgba(212,160,74,0.12)"; }}
-                  onBlur={(e) => { e.target.style.borderColor = "rgba(212,160,74,0.2)"; e.target.style.boxShadow = "none"; }}
                 />
               </div>
 
               {/* Order summary */}
               <div style={{
-                background: "linear-gradient(135deg, #FDF8F0, #F7EDDF)",
-                border: "1px solid rgba(212,160,74,0.18)",
-                borderRadius: 14, padding: "16px 18px", marginBottom: 20
+                background: "linear-gradient(135deg, #FEF3C7, #FDE68A)",
+                border: "1.5px solid rgba(245,158,11,0.25)",
+                borderRadius: 16, padding: "18px 20px", marginBottom: 24,
+                boxShadow: "0 4px 16px rgba(245,158,11,0.12)"
               }}>
-                <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#5C3D2E", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
-                  <ShoppingBag size={13} color="#D4A04A" /> Resumo do pedido
+                <p style={{ fontSize: "0.74rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#78350F", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                  <ShoppingBag size={14} color="#F59E0B" /> Resumo do pedido
                 </p>
                 {cartItems.map((i) => (
-                  <div key={i.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.88rem", color: "#5C3D2E", padding: "5px 0" }}>
+                  <div key={i.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem", color: "#78350F", padding: "5px 0" }}>
                     <span>{i.qty}x {i.name}</span>
-                    <span className="font-mono-ticket" style={{ fontWeight: 500 }}>{money(i.price * i.qty)}</span>
+                    <span className="font-mono-ticket" style={{ fontWeight: 600 }}>{money(i.price * i.qty)}</span>
                   </div>
                 ))}
-                <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1.5px dashed rgba(212,160,74,0.25)", display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: "1.05rem", color: "#2D1810" }}>
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "2px dashed rgba(245,158,11,0.3)", display: "flex", justifyContent: "spaceBetween", fontWeight: 800, fontSize: "1.1rem", color: "#1C0A00" }}>
                   <span>TOTAL</span>
-                  <span className="font-mono-ticket" style={{ color: "#B85C1E" }}>{money(total)}</span>
+                  <span className="font-mono-ticket" style={{ color: "#DC2626" }}>{money(total)}</span>
                 </div>
               </div>
 
               <button type="submit" disabled={itemCount === 0 || step === "enviando"} className="btn-press btn-hover"
                 style={{
-                  width: "100%", padding: "15px", borderRadius: 14,
-                  background: "linear-gradient(135deg, #2D1810, #4A2C1A)",
-                  color: "#FFF8F0", fontWeight: 700, fontSize: "1rem",
+                  width: "100%", padding: "16px", borderRadius: 16,
+                  background: "linear-gradient(135deg, #F59E0B, #F97316, #EF4444)",
+                  color: "#FFFFFF", fontWeight: 800, fontSize: "1.05rem",
                   border: "none", cursor: "pointer",
-                  boxShadow: "0 6px 22px rgba(45,24,16,0.28)",
-                  opacity: itemCount === 0 ? 0.4 : 1
+                  boxShadow: "0 8px 28px rgba(245,158,11,0.35)",
+                  opacity: itemCount === 0 ? 0.4 : 1,
+                  letterSpacing: "0.02em"
                 }}>
-                {step === "enviando" ? "Enviando..." : "Confirmar encomenda →"}
+                {step === "enviando" ? "Enviando..." : "✨ Confirmar encomenda ✨"}
               </button>
             </form>
           </div>
@@ -543,8 +608,8 @@ TOTAL: ${money(localOrder.total)}`;
       {/* ═══ ENVIANDO ═══ */}
       {step === "enviando" && (
         <main className="max-w-md mx-auto px-6 py-24 text-center animate-fade-in">
-          <Wheat size={38} color="#D4A04A" style={{ margin: "0 auto 16px" }} className="animate-pulse-slow" />
-          <p className="font-display" style={{ fontSize: "1.3rem", color: "#2D1810" }}>Enviando sua encomenda…</p>
+          <Wheat size={42} color="#F59E0B" style={{ margin: "0 auto 18px", filter: "drop-shadow(0 0 8px rgba(245,158,11,0.4))" }} className="animate-pulse-slow" />
+          <p className="font-display" style={{ fontSize: "1.4rem", color: "#1C0A00", fontWeight: 600 }}>Enviando sua encomenda…</p>
         </main>
       )}
 
@@ -552,35 +617,37 @@ TOTAL: ${money(localOrder.total)}`;
       {step === "enviado" && (
         <main className="max-w-lg mx-auto px-5 py-20 text-center animate-fade-up">
           <div className="animate-pop-in" style={{
-            width: 80, height: 80, borderRadius: "50%", margin: "0 auto 28px",
-            background: "linear-gradient(135deg, #4A7C59, #3D6B4E)",
-            boxShadow: "0 10px 36px rgba(74,124,89,0.32)",
+            width: 90, height: 90, borderRadius: "50%", margin: "0 auto 30px",
+            background: "linear-gradient(135deg, #10B981, #059669)",
+            boxShadow: "0 0 40px rgba(16,185,129,0.35), 0 12px 36px rgba(16,185,129,0.25)",
             display: "flex", alignItems: "center", justifyContent: "center"
           }}>
-            <Check size={38} color="#FFFFFF" strokeWidth={2.5} />
+            <Check size={42} color="#FFFFFF" strokeWidth={2.5} />
           </div>
-          <h2 className="font-display" style={{ fontSize: "2rem", fontWeight: 700, color: "#2D1810", marginBottom: 14 }}>Pedido confirmado!</h2>
-          <p style={{ fontSize: "1rem", color: "#7A6B5D", lineHeight: 1.7 }}>
-            A comanda nº <b className="font-mono-ticket" style={{ fontSize: "1.1rem", color: "#B85C1E" }}>#{orderNumber}</b> já chegou na padaria.
+          <h2 className="font-display" style={{ fontSize: "2.2rem", fontWeight: 800, color: "#1C0A00", marginBottom: 14 }}>Pedido confirmado!</h2>
+          <p style={{ fontSize: "1.05rem", color: "#7A6B5D", lineHeight: 1.7 }}>
+            A comanda nº <b className="font-mono-ticket" style={{ fontSize: "1.15rem", color: "#DC2626" }}>#{orderNumber}</b> já chegou na padaria.
           </p>
-          <p style={{ fontSize: "0.88rem", color: "#9A8A7A", marginTop: 8 }}>A Rose vai confirmar com você em breve pelo telefone.</p>
-          <div style={{ marginTop: 36, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+          <p style={{ fontSize: "0.9rem", color: "#9A8A7A", marginTop: 10 }}>A Rose vai confirmar com você em breve pelo telefone.</p>
+          <div style={{ marginTop: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
             <a href="tel:+5518991914512" style={{
               display: "flex", alignItems: "center", gap: 10,
-              padding: "13px 24px", borderRadius: 14,
-              background: "#F2E8DC", border: "1px solid rgba(212,160,74,0.2)",
-              color: "#5C3D2E", textDecoration: "none", fontSize: "0.9rem", transition: "all 0.2s"
+              padding: "14px 26px", borderRadius: 16,
+              background: "linear-gradient(135deg, #FEF3C7, #FDE68A)", 
+              border: "1.5px solid rgba(245,158,11,0.3)",
+              color: "#78350F", textDecoration: "none", fontSize: "0.92rem", transition: "all 0.25s",
+              fontWeight: 600
             }}>
-              <Phone size={15} color="#D4A04A" />
+              <Phone size={16} color="#F59E0B" />
               Precisa falar? <strong>(18) 99191-4512</strong>
             </a>
             <button onClick={() => { setCart({}); setCustomer({ nome: "", telefone: "", retirada: "", obs: "" }); setStep("menu"); }}
               className="btn-press"
               style={{
-                padding: "13px 32px", borderRadius: 100,
-                background: "linear-gradient(135deg, #2D1810, #4A2C1A)",
-                color: "#FFF8F0", fontWeight: 600, fontSize: "0.9rem", border: "none", cursor: "pointer",
-                boxShadow: "0 6px 20px rgba(45,24,16,0.28)"
+                padding: "14px 36px", borderRadius: 100,
+                background: "linear-gradient(135deg, #F59E0B, #F97316)",
+                color: "#FFFFFF", fontWeight: 700, fontSize: "0.92rem", border: "none", cursor: "pointer",
+                boxShadow: "0 8px 24px rgba(245,158,11,0.35)"
               }}>
               Fazer outra encomenda
             </button>
@@ -591,64 +658,75 @@ TOTAL: ${money(localOrder.total)}`;
       {/* ═══ FALLBACK ═══ */}
       {step === "fallback" && localOrder && (
         <main className="max-w-md mx-auto px-5 py-10 animate-fade-up">
-          <div style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 20, background: "#FFF3E0", border: "1px solid #FFD08A", textAlign: "center" }}>
-            <AlertTriangle size={22} color="#D46B00" style={{ margin: "0 auto 8px" }} />
-            <h3 className="font-display" style={{ fontSize: "1.1rem", fontWeight: 700, color: "#B84A00", marginBottom: 6 }}>Sistema temporariamente offline</h3>
-            <p style={{ fontSize: "0.85rem", color: "#5C3D2E", lineHeight: 1.6 }}>
+          <div style={{ 
+            borderRadius: 20, padding: "18px 22px", marginBottom: 22, 
+            background: "linear-gradient(135deg, #FEF3C7, #FDE68A)", 
+            border: "1.5px solid #F59E0B", textAlign: "center",
+            boxShadow: "0 4px 20px rgba(245,158,11,0.2)"
+          }}>
+            <AlertTriangle size={24} color="#B45309" style={{ margin: "0 auto 10px" }} />
+            <h3 className="font-display" style={{ fontSize: "1.15rem", fontWeight: 700, color: "#92400E", marginBottom: 6 }}>Sistema temporariamente offline</h3>
+            <p style={{ fontSize: "0.88rem", color: "#78350F", lineHeight: 1.6 }}>
               Não foi possível conectar automaticamente. Copie ou anote os dados e nos envie pelo WhatsApp.
             </p>
           </div>
 
-          <div className="font-mono-ticket" style={{ background: "#FFFFFF", borderRadius: 18, padding: "22px 24px", border: "1px solid rgba(212,160,74,0.2)", boxShadow: "0 4px 20px rgba(93,60,46,0.07)" }}>
-            <p style={{ fontWeight: 700, fontSize: "1rem", color: "#2D1810" }}>PADARIA DA ROSE</p>
+          <div className="font-mono-ticket" style={{ 
+            background: "#FFFFFF", borderRadius: 20, padding: "24px 26px", 
+            border: "1.5px solid rgba(245,158,11,0.2)", 
+            boxShadow: "0 8px 32px rgba(120,53,15,0.08)" 
+          }}>
+            <p style={{ fontWeight: 700, fontSize: "1.05rem", color: "#1C0A00" }}>PADARIA DA ROSE</p>
             <p style={{ color: "#5C3D2E", marginTop: 2 }}>Pedido #{localOrder.id}</p>
-            <p style={{ fontSize: "0.78rem", color: "#7A6B5D" }}>{localOrder.created_at}</p>
+            <p style={{ fontSize: "0.8rem", color: "#7A6B5D" }}>{localOrder.created_at}</p>
             <BreadDivider />
-            <p style={{ color: "#2D1810", fontWeight: 600 }}>{localOrder.customer.nome}</p>
+            <p style={{ color: "#1C0A00", fontWeight: 600 }}>{localOrder.customer.nome}</p>
             <p style={{ color: "#5C3D2E" }}>{localOrder.customer.telefone}</p>
             <p style={{ color: "#5C3D2E" }}>Retirada: {localOrder.customer.retirada}</p>
-            {localOrder.customer.obs && <p style={{ marginTop: 4, fontSize: "0.8rem", color: "#7A6B5D" }}>Obs: {localOrder.customer.obs}</p>}
+            {localOrder.customer.obs && <p style={{ marginTop: 4, fontSize: "0.82rem", color: "#7A6B5D" }}>Obs: {localOrder.customer.obs}</p>}
             <BreadDivider />
             {localOrder.items.map((i, idx) => (
-              <div key={idx} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", color: "#2D1810" }}>
+              <div key={idx} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", color: "#1C0A00" }}>
                 <span>{i.qty}x {i.name}</span>
                 <span>{money(i.price * i.qty)}</span>
               </div>
             ))}
             <BreadDivider />
-            <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: "1.05rem", color: "#2D1810" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: "1.1rem", color: "#1C0A00" }}>
               <span>TOTAL</span>
               <span>{money(localOrder.total)}</span>
             </div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 20 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 22 }}>
             <a href="https://wa.me/5518991914512" target="_blank" rel="noopener noreferrer"
               style={{
-                width: "100%", padding: "14px", borderRadius: 14,
-                background: "linear-gradient(135deg, #4A7C59, #3D6B4E)",
-                color: "#FFFFFF", fontWeight: 600, textAlign: "center",
-                display: "block", textDecoration: "none", boxShadow: "0 4px 14px rgba(74,124,89,0.28)"
+                width: "100%", padding: "15px", borderRadius: 16,
+                background: "linear-gradient(135deg, #25D366, #128C7E)",
+                color: "#FFFFFF", fontWeight: 700, textAlign: "center",
+                display: "block", textDecoration: "none", 
+                boxShadow: "0 6px 20px rgba(37,211,102,0.3)"
               }}>
-              Enviar pelo WhatsApp
+              📲 Enviar pelo WhatsApp
             </a>
             <button onClick={copyOrderDetails} className="btn-press"
               style={{
-                width: "100%", padding: "12px", borderRadius: 14,
-                background: "#F2E8DC", color: "#5C3D2E", fontWeight: 500,
-                border: "1px solid rgba(212,160,74,0.2)", cursor: "pointer",
+                width: "100%", padding: "13px", borderRadius: 16,
+                background: "linear-gradient(135deg, #FEF3C7, #FDE68A)", 
+                color: "#78350F", fontWeight: 600,
+                border: "1.5px solid rgba(245,158,11,0.3)", cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8
               }}>
-              {copied ? <><Check size={15} /> Copiado!</> : <><Copy size={15} /> Copiar pedido</>}
+              {copied ? <><Check size={16} /> Copiado!</> : <><Copy size={16} /> Copiar pedido</>}
             </button>
             <button onClick={() => { setStep("menu"); setOrderError(null); }}
-              style={{ width: "100%", padding: "10px", borderRadius: 14, background: "none", color: "#7A6B5D", fontSize: "0.88rem", border: "none", cursor: "pointer" }}>
+              style={{ width: "100%", padding: "11px", borderRadius: 16, background: "none", color: "#7A6B5D", fontSize: "0.9rem", border: "none", cursor: "pointer", fontWeight: 500 }}>
               Tentar novamente
             </button>
           </div>
 
-          <p style={{ textAlign: "center", fontSize: "0.8rem", color: "#7A6B5D", marginTop: 20 }}>
-            Ou ligue: <strong style={{ color: "#5C3D2E" }}>(18) 99191-4512</strong>
+          <p style={{ textAlign: "center", fontSize: "0.82rem", color: "#7A6B5D", marginTop: 22 }}>
+            Ou ligue: <strong style={{ color: "#1C0A00" }}>(18) 99191-4512</strong>
           </p>
         </main>
       )}
@@ -657,20 +735,26 @@ TOTAL: ${money(localOrder.total)}`;
       {step === "menu" && itemCount > 0 && (
         <button onClick={() => setTicketOpen(true)} className="animate-slide-up btn-press"
           style={{
-            position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
-            display: "flex", alignItems: "center", gap: 16,
-            padding: "14px 26px", borderRadius: 100,
-            background: "linear-gradient(135deg, #2D1810, #4A2C1A)",
-            color: "#FFF8F0", border: "none", cursor: "pointer",
-            boxShadow: "0 10px 36px rgba(45,24,16,0.42)",
-            zIndex: 30, whiteSpace: "nowrap"
+            position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)",
+            display: "flex", alignItems: "center", gap: 18,
+            padding: "16px 30px", borderRadius: 100,
+            background: "linear-gradient(135deg, #F59E0B, #F97316, #EF4444)",
+            color: "#FFFFFF", border: "none", cursor: "pointer",
+            boxShadow: "0 12px 40px rgba(245,158,11,0.45), 0 0 0 2px rgba(255,255,255,0.3) inset",
+            zIndex: 30, whiteSpace: "nowrap",
+            animation: "glow 3s ease-in-out infinite"
           }}>
-          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(232,195,106,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <ShoppingBag size={15} color="#E8C36A" />
+          <div style={{ 
+            width: 36, height: 36, borderRadius: "50%", 
+            background: "rgba(255,255,255,0.25)", 
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 0 12px rgba(255,255,255,0.2)"
+          }}>
+            <ShoppingBag size={17} color="#FFFFFF" />
           </div>
-          <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>{itemCount} {itemCount === 1 ? "item" : "itens"}</span>
-          <span style={{ width: 1, height: 22, background: "rgba(232,195,106,0.25)" }} />
-          <span className="font-mono-ticket" style={{ fontWeight: 700, color: "#E8C36A", fontSize: "1rem" }}>{money(total)}</span>
+          <span style={{ fontWeight: 800, fontSize: "0.95rem" }}>{itemCount} {itemCount === 1 ? "item" : "itens"}</span>
+          <span style={{ width: 1.5, height: 24, background: "rgba(255,255,255,0.35)" }} />
+          <span className="font-mono-ticket" style={{ fontWeight: 700, color: "#FFFFFF", fontSize: "1.05rem" }}>{money(total)}</span>
         </button>
       )}
 
@@ -679,86 +763,95 @@ TOTAL: ${money(localOrder.total)}`;
         <div className="animate-fade-in" style={{
           position: "fixed", inset: 0, zIndex: 40,
           display: "flex", alignItems: "flex-end", justifyContent: "center",
-          background: "rgba(20,10,5,0.72)"
+          background: "rgba(28,10,0,0.75)"
         }} onClick={(e) => { if (e.target === e.currentTarget) setTicketOpen(false); }}>
           <div className="animate-slide-up" style={{
-            width: "100%", maxWidth: 440, maxHeight: "88vh",
-            overflowY: "auto", borderRadius: "24px 24px 0 0",
+            width: "100%", maxWidth: 460, maxHeight: "88vh",
+            overflowY: "auto", borderRadius: "28px 28px 0 0",
             background: "#FFFFFF",
-            boxShadow: "0 -12px 48px rgba(0,0,0,0.22)"
+            boxShadow: "0 -16px 56px rgba(0,0,0,0.25)"
           }}>
             {/* Handle */}
-            <div style={{ display: "flex", justifyContent: "center", paddingTop: 12, paddingBottom: 4 }}>
-              <div style={{ width: 40, height: 4, borderRadius: 2, background: "#E8DDD5" }} />
+            <div style={{ display: "flex", justifyContent: "center", paddingTop: 14, paddingBottom: 4 }}>
+              <div style={{ width: 44, height: 5, borderRadius: 3, background: "linear-gradient(90deg, #F5D89A, #F59E0B)" }} />
             </div>
 
-            <div style={{ padding: "12px 24px 28px" }}>
+            <div style={{ padding: "14px 26px 30px" }}>
               {/* Header */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, #D4A04A, #E8C36A)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <ShoppingBag size={18} color="#FFFFFF" />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{ 
+                    width: 46, height: 46, borderRadius: "50%", 
+                    background: "linear-gradient(135deg, #F59E0B, #F97316)", 
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    boxShadow: "0 4px 16px rgba(245,158,11,0.35)"
+                  }}>
+                    <ShoppingBag size={20} color="#FFFFFF" />
                   </div>
                   <div>
-                    <p style={{ fontWeight: 700, color: "#2D1810", fontSize: "1rem" }}>Seu Pedido</p>
-                    <p style={{ fontSize: "0.75rem", color: "#9A8A7A" }}>{new Date().toLocaleString("pt-BR")}</p>
+                    <p style={{ fontWeight: 800, color: "#1C0A00", fontSize: "1.05rem" }}>Seu Pedido</p>
+                    <p style={{ fontSize: "0.78rem", color: "#9A8A7A" }}>{new Date().toLocaleString("pt-BR")}</p>
                   </div>
                 </div>
                 <button onClick={() => setTicketOpen(false)} className="btn-press"
-                  style={{ width: 36, height: 36, borderRadius: "50%", background: "#F2E8DC", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <X size={15} color="#5C3D2E" />
+                  style={{ 
+                    width: 40, height: 40, borderRadius: "50%", 
+                    background: "#FEF3C7", border: "1.5px solid rgba(245,158,11,0.2)", 
+                    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" 
+                  }}>
+                  <X size={16} color="#92400E" />
                 </button>
               </div>
 
-              <div style={{ height: 1, background: "repeating-linear-gradient(90deg, rgba(212,160,74,0.3) 0, rgba(212,160,74,0.3) 6px, transparent 6px, transparent 12px)" }} />
+              <div style={{ height: 1.5, background: "repeating-linear-gradient(90deg, rgba(245,158,11,0.35) 0, rgba(245,158,11,0.35) 6px, transparent 6px, transparent 12px)" }} />
 
               {/* Items */}
-              <div style={{ padding: "16px 0", display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ padding: "18px 0", display: "flex", flexDirection: "column", gap: 8 }}>
                 {cartItems.length === 0 && (
-                  <div style={{ textAlign: "center", padding: "32px 0" }}>
-                    <ShoppingBag size={30} color="#D4A04A" style={{ margin: "0 auto 10px", opacity: 0.3 }} />
-                    <p style={{ color: "#9A8A7A", fontSize: "0.9rem" }}>Sua comanda está vazia.</p>
+                  <div style={{ textAlign: "center", padding: "36px 0" }}>
+                    <ShoppingBag size={34} color="#F59E0B" style={{ margin: "0 auto 12px", opacity: 0.3 }} />
+                    <p style={{ color: "#9A8A7A", fontSize: "0.92rem" }}>Sua comanda está vazia.</p>
                   </div>
                 )}
                 {cartItems.map((i) => (
-                  <div key={i.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div key={i.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                         <button onClick={() => removeItem(i.id)} className="btn-press"
-                          style={{ width: 26, height: 26, borderRadius: "50%", background: "#F2E8DC", border: "1px solid rgba(212,160,74,0.2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <Minus size={10} color="#5C3D2E" />
+                          style={{ width: 28, height: 28, borderRadius: "50%", background: "#FEF3C7", border: "1.5px solid rgba(245,158,11,0.25)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Minus size={11} color="#92400E" />
                         </button>
-                        <span className="font-mono-ticket" style={{ fontWeight: 700, fontSize: "0.95rem", width: 22, textAlign: "center", color: "#2D1810" }}>{i.qty}</span>
+                        <span className="font-mono-ticket" style={{ fontWeight: 700, fontSize: "1rem", width: 24, textAlign: "center", color: "#1C0A00" }}>{i.qty}</span>
                         <button onClick={() => addItem(i.id)} className="btn-press"
-                          style={{ width: 26, height: 26, borderRadius: "50%", background: "#2D1810", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <Plus size={10} color="#FFFFFF" />
+                          style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg, #F59E0B, #F97316)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Plus size={11} color="#FFFFFF" />
                         </button>
                       </div>
-                      <span style={{ fontWeight: 500, color: "#2D1810", fontSize: "0.9rem" }}>{i.name}</span>
+                      <span style={{ fontWeight: 600, color: "#1C0A00", fontSize: "0.92rem" }}>{i.name}</span>
                     </div>
-                    <span className="font-mono-ticket" style={{ fontWeight: 700, color: "#B85C1E", fontSize: "0.9rem" }}>{money(i.price * i.qty)}</span>
+                    <span className="font-mono-ticket" style={{ fontWeight: 700, color: "#DC2626", fontSize: "0.92rem" }}>{money(i.price * i.qty)}</span>
                   </div>
                 ))}
               </div>
 
-              <div style={{ height: 1, background: "repeating-linear-gradient(90deg, rgba(212,160,74,0.3) 0, rgba(212,160,74,0.3) 6px, transparent 6px, transparent 12px)" }} />
+              <div style={{ height: 1.5, background: "repeating-linear-gradient(90deg, rgba(245,158,11,0.35) 0, rgba(245,158,11,0.35) 6px, transparent 6px, transparent 12px)" }} />
 
               {/* Total */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 0", fontWeight: 700, fontSize: "1.1rem" }}>
-                <span style={{ color: "#2D1810" }}>TOTAL</span>
-                <span className="font-mono-ticket" style={{ color: "#B85C1E", fontSize: "1.15rem" }}>{money(total)}</span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 0", fontWeight: 800, fontSize: "1.15rem" }}>
+                <span style={{ color: "#1C0A00" }}>TOTAL</span>
+                <span className="font-mono-ticket" style={{ color: "#DC2626", fontSize: "1.2rem" }}>{money(total)}</span>
               </div>
 
               <button onClick={() => { setTicketOpen(false); setStep("dados"); }} disabled={itemCount === 0} className="btn-press btn-hover"
                 style={{
-                  width: "100%", padding: "15px", borderRadius: 14, marginTop: 4,
-                  background: "linear-gradient(135deg, #2D1810, #4A2C1A)",
-                  color: "#FFF8F0", fontWeight: 700, fontSize: "1rem",
+                  width: "100%", padding: "16px", borderRadius: 16, marginTop: 6,
+                  background: "linear-gradient(135deg, #F59E0B, #F97316, #EF4444)",
+                  color: "#FFFFFF", fontWeight: 800, fontSize: "1.05rem",
                   border: "none", cursor: itemCount === 0 ? "not-allowed" : "pointer",
-                  boxShadow: "0 6px 22px rgba(45,24,16,0.28)",
+                  boxShadow: "0 8px 28px rgba(245,158,11,0.35)",
                   opacity: itemCount === 0 ? 0.4 : 1
                 }}>
-                Continuar para os dados →
+                ✨ Continuar para os dados →
               </button>
             </div>
           </div>
