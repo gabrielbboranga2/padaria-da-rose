@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Wheat, Flame, Cookie, Plus, Minus, Phone, Clock, X, Check, ShoppingBag, AlertTriangle, Copy } from "lucide-react";
+import { Wheat, Flame, Cookie, Plus, Minus, Phone, Clock, X, Check, ShoppingBag, AlertTriangle, Copy, Star, MapPin } from "lucide-react";
 import { supabase } from "./lib/supabaseClient";
 
 const CATEGORIES = [
@@ -10,25 +10,6 @@ const CATEGORIES = [
 
 const money = (v) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-function Logo() {
-  return (
-    <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full overflow-hidden" style={{
-      boxShadow: "0 8px 32px rgba(0, 0, 0, 0.25)",
-      border: "3px solid rgba(232, 195, 106, 0.6)"
-    }}>
-      <img
-        src="/logo.png"
-        alt="Padaria da Rose"
-        className="w-full h-full object-cover"
-        style={{
-          mixBlendMode: "multiply",
-          filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
-        }}
-      />
-    </div>
-  );
-}
-
 function BreadDivider() {
   return (
     <div className="flex items-center justify-center gap-3 py-4">
@@ -38,12 +19,6 @@ function BreadDivider() {
     </div>
   );
 }
-
-const DECORATIVE_BREADS = [
-  "M20 55 Q20 30 50 25 Q80 30 80 55 Z",
-  "M30 50 Q30 20 50 18 Q70 20 70 50 Z",
-  "M15 52 Q15 40 50 35 Q85 40 85 52 Z",
-];
 
 export default function SiteCliente() {
   const [products, setProducts] = useState([]);
@@ -171,237 +146,281 @@ TOTAL: ${money(localOrder.total)}`;
   };
 
   return (
-    <div className="min-h-screen w-full relative" style={{ background: "#FCF6F0", fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen w-full" style={{ background: "#FAF6F1", fontFamily: "'Inter', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
-        .font-display { font-family: 'Fraunces', serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+        .font-display { font-family: 'Playfair Display', serif; }
         .font-mono-ticket { font-family: 'IBM Plex Mono', monospace; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes popIn { 0% { transform: scale(0); } 70% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        @keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
-        
-        .animate-fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-        .animate-pop-in { animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn { 0% { transform: scale(0.8); opacity:0; } 70% { transform: scale(1.05); } 100% { transform: scale(1); opacity:1; } }
+        @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        @keyframes slideUp { from { transform: translateY(100%); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+        .animate-fade-up { animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .animate-fade-in { animation: fadeIn 0.4s ease both; }
+        .animate-pop-in { animation: popIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
         .animate-pulse-slow { animation: pulse 2.5s ease-in-out infinite; }
-        .animate-float { animation: float 5s ease-in-out infinite; }
-        
-        .card-hover { 
-          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
-        }
-        .card-hover:hover { 
-          transform: translateY(-4px); 
-          box-shadow: 0 16px 40px rgba(93, 60, 46, 0.12); 
-        }
-        .btn-press:active { transform: scale(0.97); }
-        
-        input::placeholder, textarea::placeholder {
-          color: #B8A898;
+        .animate-slide-up { animation: slideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+        .card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 20px 40px rgba(93, 60, 46, 0.13) !important; }
+        .btn-press { transition: all 0.15s ease; }
+        .btn-press:active { transform: scale(0.96); }
+        .btn-hover:hover { filter: brightness(1.05); }
+
+        input:focus, textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(212, 160, 74, 0.18); }
+        input::placeholder, textarea::placeholder { color: #C5B5A5; }
+
+        .category-pill { transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
+        .category-pill:hover { transform: translateY(-1px); }
+
+        .gold-shine {
+          background: linear-gradient(90deg, #D4A04A 0%, #F0C96A 40%, #D4A04A 60%, #B8883A 100%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
         }
       `}</style>
 
-      <header className="relative overflow-hidden" style={{
-        background: "linear-gradient(180deg, #1a0f0a 0%, #2D1810 50%, #3d2215 100%)"
-      }}>
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute inset-0" style={{
-            background: "radial-gradient(circle at 30% 40%, rgba(232, 195, 106, 0.08) 0%, transparent 60%)"
-          }} />
-          <div className="absolute inset-0" style={{
-            background: "radial-gradient(circle at 70% 60%, rgba(232, 195, 106, 0.05) 0%, transparent 50%)"
-          }} />
-          {DECORATIVE_BREADS.map((d, i) => (
-            <svg key={i} className="absolute opacity-[0.03]" style={{
-              width: 200 + i * 80, height: 120 + i * 40,
-              bottom: -20 + i * 20, [i % 2 === 0 ? "left" : "right"]: -30 + i * 40
-            }} viewBox="0 0 100 60" fill="#E8C36A">
-              <path d={d} />
-            </svg>
-          ))}
+      {/* ═══ HEADER ═══ */}
+      <header style={{ background: "linear-gradient(160deg, #1C0F08 0%, #2A1610 45%, #3A2218 100%)", position: "relative", overflow: "hidden" }}>
+        {/* Decorative background elements */}
+        <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+          <div style={{ position: "absolute", top: "-40%", left: "-10%", width: "60%", height: "160%", background: "radial-gradient(ellipse, rgba(232,195,106,0.06) 0%, transparent 65%)" }} />
+          <div style={{ position: "absolute", top: "-20%", right: "-5%", width: "50%", height: "120%", background: "radial-gradient(ellipse, rgba(212,160,74,0.04) 0%, transparent 60%)" }} />
+          {/* Horizontal line accent */}
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "1px", background: "linear-gradient(90deg, transparent, rgba(232,195,106,0.3), transparent)" }} />
         </div>
 
-        <div className="max-w-6xl mx-auto px-6 pt-10 pb-14 flex flex-col items-center text-center relative z-10">
-          <div className="mb-6">
-            <Logo />
+        <div className="max-w-5xl mx-auto px-6 pt-16 pb-20 flex flex-col items-center text-center relative" style={{ zIndex: 1 }}>
+          {/* Logo — sem borda extra, com brilho suave */}
+          <div className="mb-8 animate-fade-up" style={{ animationDelay: "0s" }}>
+            <div style={{
+              width: 120, height: 120,
+              borderRadius: "50%",
+              overflow: "hidden",
+              boxShadow: "0 0 0 1px rgba(232,195,106,0.25), 0 12px 40px rgba(0,0,0,0.45)",
+              position: "relative"
+            }}>
+              <img
+                src="/logo.png"
+                alt="Padaria da Rose"
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              />
+            </div>
           </div>
-          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight" style={{ color: "#FFF8F0" }}>
+
+          <h1 className="font-display animate-fade-up" style={{
+            fontSize: "clamp(2.2rem, 6vw, 3.8rem)",
+            fontWeight: 700,
+            color: "#FFF8F0",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.1,
+            animationDelay: "0.08s"
+          }}>
             Padaria <span style={{ color: "#E8C36A" }}>da Rose</span>
           </h1>
-          <div className="flex items-center gap-3 my-4" style={{ color: "#E8C36A" }}>
-            <span className="h-px w-12" style={{ background: "linear-gradient(90deg, transparent, #E8C36A)" }} />
-            <Wheat size={18} strokeWidth={1.5} />
-            <span className="h-px w-12" style={{ background: "linear-gradient(90deg, #E8C36A, transparent)" }} />
+
+          {/* Divider ornament */}
+          <div className="flex items-center gap-4 my-5 animate-fade-up" style={{ animationDelay: "0.14s" }}>
+            <div style={{ height: 1, width: 48, background: "linear-gradient(90deg, transparent, rgba(232,195,106,0.5))" }} />
+            <Wheat size={15} color="rgba(232,195,106,0.7)" strokeWidth={1.5} />
+            <div style={{ height: 1, width: 48, background: "linear-gradient(90deg, rgba(232,195,106,0.5), transparent)" }} />
           </div>
-          <p className="max-w-lg text-base sm:text-lg leading-relaxed" style={{ color: "#C4A98E" }}>
-            Pães artesanais, bolos, doces e assados feitos com carinho.
-            <br />
-            <span className="text-sm" style={{ color: "#A0896E" }}>Encomende agora e retire na padaria.</span>
+
+          <p className="animate-fade-up" style={{
+            color: "#C4A98E",
+            fontSize: "1.05rem",
+            maxWidth: 400,
+            lineHeight: 1.65,
+            animationDelay: "0.18s"
+          }}>
+            Pães artesanais, bolos e doces feitos com carinho.<br />
+            <span style={{ color: "#8A7A6A", fontSize: "0.9rem" }}>Encomende e retire na padaria.</span>
           </p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-5 text-sm" style={{ color: "#C4A98E" }}>
-            <a href="tel:+5518991914512" className="flex items-center gap-2 px-4 py-2 rounded-full transition-all hover:scale-105" style={{
-              background: "rgba(232, 195, 106, 0.1)",
-              border: "1px solid rgba(232, 195, 106, 0.2)"
+
+          {/* Info chips */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-7 animate-fade-up" style={{ animationDelay: "0.22s" }}>
+            <a href="tel:+5518991914512" style={{
+              display: "flex", alignItems: "center", gap: 7,
+              padding: "9px 18px", borderRadius: 100,
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(232,195,106,0.18)",
+              color: "#C4A98E", fontSize: "0.85rem",
+              textDecoration: "none", transition: "all 0.2s"
             }}>
-              <Phone size={14} color="#E8C36A" />
-              <span>(18) 99191-4512</span>
+              <Phone size={13} color="#E8C36A" /> (18) 99191-4512
             </a>
-            <span className="flex items-center gap-2 px-4 py-2 rounded-full" style={{
-              background: "rgba(232, 195, 106, 0.1)",
-              border: "1px solid rgba(232, 195, 106, 0.2)"
+            <span style={{
+              display: "flex", alignItems: "center", gap: 7,
+              padding: "9px 18px", borderRadius: 100,
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(232,195,106,0.18)",
+              color: "#C4A98E", fontSize: "0.85rem"
             }}>
-              <Clock size={14} color="#E8C36A" />
-              <span>Ter–Dom, 6h–19h</span>
+              <Clock size={13} color="#E8C36A" /> Ter–Dom, 6h–19h
             </span>
           </div>
         </div>
 
+        {/* Wave transition */}
         <div style={{
-          height: 40,
-          background: "linear-gradient(180deg, transparent, #FCF6F0)",
-          clipPath: "ellipse(80% 100% at 50% 100%)",
-          marginTop: -20,
-          position: "relative",
-          zIndex: 2
+          height: 52,
+          background: "#FAF6F1",
+          clipPath: "ellipse(60% 100% at 50% 100%)",
+          marginTop: -1
         }} />
       </header>
 
+      {/* ═══ OFFLINE BANNER ═══ */}
       {!connectionOk && (
-        <div className="max-w-5xl mx-auto px-6 pt-4">
-          <div className="rounded-xl p-4 flex items-start gap-3 animate-fade-in" style={{ background: "#FFF3E0", border: "1px solid #FFCC80" }}>
-            <AlertTriangle size={18} color="#E65100" className="mt-0.5 shrink-0" />
-            <div className="text-sm" style={{ color: "#5C3D2E" }}>
-              <strong style={{ color: "#BF360C" }}>Sistema offline.</strong> Seu pedido será salvo localmente. Ao finalizar, encaminhe os detalhes para a padaria.
-            </div>
+        <div className="max-w-5xl mx-auto px-5 pt-4">
+          <div className="rounded-2xl p-4 flex items-start gap-3 animate-fade-up" style={{ background: "#FFF3E0", border: "1px solid #FFD08A" }}>
+            <AlertTriangle size={17} color="#D46B00" style={{ marginTop: 1, flexShrink: 0 }} />
+            <p className="text-sm" style={{ color: "#5C3D2E" }}>
+              <strong style={{ color: "#B84A00" }}>Sistema offline.</strong> Seu pedido será salvo localmente. Ao finalizar, encaminhe os detalhes para a padaria.
+            </p>
           </div>
         </div>
       )}
 
+      {/* ═══ MENU ═══ */}
       {step === "menu" && (
-        <main className="max-w-5xl mx-auto px-4 sm:px-6 pb-32 animate-fade-in">
-          <nav className="flex gap-3 overflow-x-auto py-6 sticky top-0 z-20 backdrop-blur-md" style={{ 
-            background: "rgba(252, 246, 240, 0.95)",
-            borderBottom: "1px solid rgba(212, 160, 74, 0.1)"
+        <main className="max-w-5xl mx-auto px-4 sm:px-6 pb-32 animate-fade-up">
+          {/* Category nav */}
+          <nav className="flex gap-2.5 overflow-x-auto py-6 sticky top-0 z-20" style={{
+            background: "rgba(250, 246, 241, 0.97)",
+            backdropFilter: "blur(12px)",
+            borderBottom: "1px solid rgba(212, 160, 74, 0.1)",
+            scrollbarWidth: "none"
           }}>
             {CATEGORIES.map((c) => {
               const Icon = c.icon;
               const isActive = activeCat === c.id;
               return (
                 <button key={c.id} onClick={() => setActiveCat(c.id)}
-                  className="flex items-center gap-2.5 px-6 py-3 rounded-full text-sm font-semibold whitespace-nowrap transition-all btn-press"
+                  className="category-pill flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap"
                   style={{
                     background: isActive ? "linear-gradient(135deg, #2D1810, #4A2C1A)" : "#FFFFFF",
-                    color: isActive ? "#FCF6F0" : "#5C3D2E",
+                    color: isActive ? "#FFF8F0" : "#5C3D2E",
                     border: "1px solid",
-                    borderColor: isActive ? "transparent" : "rgba(212, 160, 74, 0.15)",
-                    boxShadow: isActive ? "0 4px 16px rgba(45, 24, 16, 0.25)" : "0 2px 8px rgba(0,0,0,0.04)"
+                    borderColor: isActive ? "transparent" : "rgba(212, 160, 74, 0.18)",
+                    boxShadow: isActive ? "0 6px 18px rgba(45,24,16,0.22)" : "0 1px 4px rgba(0,0,0,0.05)"
                   }}>
-                  <Icon size={16} />{c.label}
+                  <Icon size={15} /> {c.label}
                 </button>
               );
             })}
           </nav>
 
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-24 gap-4">
-              <div className="relative">
-                <Wheat size={40} color="#D4A04A" className="animate-pulse-slow" />
-              </div>
-              <span className="text-sm font-medium" style={{ color: "#7A6B5D" }}>Carregando cardápio…</span>
+            <div className="flex flex-col items-center justify-center py-28 gap-4">
+              <Wheat size={36} color="#D4A04A" className="animate-pulse-slow" />
+              <span style={{ color: "#9A8A7A", fontSize: "0.9rem" }}>Carregando cardápio…</span>
             </div>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
               {products.filter((p) => p.category === activeCat).map((p, idx) => (
-                <div key={p.id} className="rounded-2xl overflow-hidden card-hover group"
+                <div key={p.id} className="card-hover rounded-2xl overflow-hidden"
                   style={{
                     background: "#FFFFFF",
-                    border: "1px solid rgba(212, 160, 74, 0.12)",
-                    boxShadow: "0 4px 16px rgba(93, 60, 46, 0.06)",
-                    opacity: p.available ? 1 : 0.55,
-                    animation: `fadeIn 0.4s ease-out ${idx * 0.08}s both`
+                    border: "1px solid rgba(212,160,74,0.10)",
+                    boxShadow: "0 2px 12px rgba(93,60,46,0.06)",
+                    opacity: p.available ? 1 : 0.5,
+                    animation: `fadeUp 0.4s ease-out ${idx * 0.07}s both`
                   }}>
-                  <div className="h-2" style={{
-                    background: p.available 
-                      ? "linear-gradient(90deg, #D4A04A, #E8C36A, #D4A04A)" 
-                      : "#E0D5C9"
+                  {/* Top accent bar */}
+                  <div style={{
+                    height: 3,
+                    background: p.available
+                      ? "linear-gradient(90deg, #C9893A, #E8C36A, #C9893A)"
+                      : "#E8E0D8"
                   }} />
-                  <div className="p-5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <h3 className="font-display text-xl font-semibold" style={{ color: "#2D1810" }}>{p.name}</h3>
-                        <p className="text-sm mt-2 leading-relaxed" style={{ color: "#7A6B5D" }}>{p.description}</p>
+                  <div style={{ padding: "20px 20px 18px" }}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div style={{ flex: 1 }}>
+                        <h3 className="font-display" style={{ fontSize: "1.15rem", fontWeight: 600, color: "#2D1810", lineHeight: 1.2 }}>{p.name}</h3>
+                        {p.description && (
+                          <p style={{ fontSize: "0.82rem", color: "#8A7A6A", marginTop: 6, lineHeight: 1.55 }}>{p.description}</p>
+                        )}
                       </div>
                       {!p.available && (
-                        <span className="text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full font-mono-ticket shrink-0 font-medium" style={{ 
-                          background: "rgba(184, 74, 74, 0.08)", 
-                          color: "#B84A4A",
-                          border: "1px solid rgba(184, 74, 74, 0.15)"
+                        <span style={{
+                          fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.06em",
+                          padding: "3px 10px", borderRadius: 100,
+                          background: "rgba(180,70,70,0.07)", color: "#B84A4A",
+                          border: "1px solid rgba(180,70,70,0.14)", flexShrink: 0,
+                          fontFamily: "'IBM Plex Mono', monospace", fontWeight: 500
                         }}>
                           Esgotado
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center justify-between mt-5 pt-4" style={{ borderTop: "1px solid rgba(212, 160, 74, 0.12)" }}>
-                      <div className="flex items-baseline gap-1">
-                        <span className="font-mono-ticket text-xl font-bold" style={{ color: "#B85C1E" }}>
+
+                    <div className="flex items-center justify-between mt-5 pt-4" style={{ borderTop: "1px solid rgba(212,160,74,0.1)" }}>
+                      <div>
+                        <span className="font-mono-ticket" style={{ fontSize: "1.2rem", fontWeight: 700, color: "#B85C1E" }}>
                           {money(p.price)}
                         </span>
-                        <span className="text-xs font-medium" style={{ color: "#9A8A7A" }}>/ {p.unit}</span>
+                        <span style={{ fontSize: "0.75rem", color: "#9A8A7A", marginLeft: 4 }}>/ {p.unit}</span>
                       </div>
                       {p.available ? (
                         (cart[p.id] || 0) > 0 ? (
-                          <div className="flex items-center gap-3">
-                            <button onClick={() => removeItem(p.id)}
-                              className="w-9 h-9 rounded-full flex items-center justify-center btn-press transition-all"
-                              style={{ 
-                                background: "#F5E6D3", 
-                                color: "#5C3D2E",
-                                border: "1px solid rgba(212, 160, 74, 0.2)"
+                          <div className="flex items-center gap-2.5">
+                            <button onClick={() => removeItem(p.id)} className="btn-press"
+                              style={{
+                                width: 34, height: 34, borderRadius: "50%",
+                                background: "#F2E8DC", border: "1px solid rgba(212,160,74,0.2)",
+                                color: "#5C3D2E", display: "flex", alignItems: "center", justifyContent: "center",
+                                cursor: "pointer"
                               }}>
-                              <Minus size={14} />
+                              <Minus size={13} />
                             </button>
-                            <span className="w-8 text-center font-mono-ticket text-lg font-bold" style={{ color: "#2D1810" }}>{cart[p.id]}</span>
-                            <button onClick={() => addItem(p.id)}
-                              className="w-9 h-9 rounded-full flex items-center justify-center btn-press transition-all"
-                              style={{ 
-                                background: "linear-gradient(135deg, #D4A04A, #C9953E)", 
-                                color: "#FFFFFF",
-                                boxShadow: "0 2px 8px rgba(212, 160, 74, 0.3)"
+                            <span className="font-mono-ticket" style={{ fontSize: "1.05rem", fontWeight: 700, color: "#2D1810", width: 24, textAlign: "center" }}>{cart[p.id]}</span>
+                            <button onClick={() => addItem(p.id)} className="btn-press"
+                              style={{
+                                width: 34, height: 34, borderRadius: "50%",
+                                background: "linear-gradient(135deg, #C9893A, #D4A04A)",
+                                color: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center",
+                                boxShadow: "0 3px 10px rgba(212,160,74,0.35)", cursor: "pointer", border: "none"
                               }}>
-                              <Plus size={14} />
+                              <Plus size={13} />
                             </button>
                           </div>
                         ) : (
-                          <button onClick={() => addItem(p.id)}
-                            className="text-sm font-medium px-5 py-2.5 rounded-full flex items-center gap-2 btn-press transition-all"
+                          <button onClick={() => addItem(p.id)} className="btn-press btn-hover"
                             style={{
+                              fontSize: "0.83rem", fontWeight: 600,
+                              padding: "9px 18px", borderRadius: 100,
                               background: "linear-gradient(135deg, #2D1810, #4A2C1A)",
-                              color: "#FCF6F0",
-                              boxShadow: "0 4px 12px rgba(45, 24, 16, 0.25)"
+                              color: "#FFF8F0", border: "none",
+                              boxShadow: "0 4px 14px rgba(45,24,16,0.22)",
+                              display: "flex", alignItems: "center", gap: 6, cursor: "pointer"
                             }}>
-                            <Plus size={14} /> Adicionar
+                            <Plus size={13} /> Adicionar
                           </button>
                         )
                       ) : (
-                        <span className="text-xs font-medium px-3 py-1.5 rounded-full" style={{ 
-                          color: "#9A8A7A",
-                          background: "rgba(154, 138, 122, 0.08)"
-                        }}>Disponível em breve</span>
+                        <span style={{ fontSize: "0.78rem", color: "#9A8A7A", padding: "6px 12px", background: "rgba(154,138,122,0.07)", borderRadius: 100 }}>
+                          Em breve
+                        </span>
                       )}
                     </div>
                   </div>
                 </div>
               ))}
+
               {products.filter((p) => p.category === activeCat).length === 0 && (
                 <div className="sm:col-span-2 lg:col-span-3 text-center py-20">
-                  <div className="w-20 h-20 rounded-full mx-auto flex items-center justify-center mb-4" style={{
-                    background: "rgba(212, 160, 74, 0.08)"
-                  }}>
-                    <Cookie size={32} color="#D4A04A" />
+                  <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(212,160,74,0.07)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                    <Cookie size={30} color="#D4A04A" />
                   </div>
-                  <p className="font-display text-lg" style={{ color: "#5C3D2E" }}>Nenhum produto nesta categoria ainda.</p>
-                  <p className="text-sm mt-1" style={{ color: "#9A8A7A" }}>Volte em breve para conferir as novidades!</p>
+                  <p className="font-display" style={{ color: "#5C3D2E", fontSize: "1.1rem" }}>Nenhum produto nesta categoria.</p>
+                  <p style={{ color: "#9A8A7A", fontSize: "0.85rem", marginTop: 6 }}>Volte em breve para conferir as novidades!</p>
                 </div>
               )}
             </div>
@@ -409,168 +428,159 @@ TOTAL: ${money(localOrder.total)}`;
         </main>
       )}
 
+      {/* ═══ DADOS ═══ */}
       {step === "dados" && (
-        <main className="max-w-lg mx-auto px-6 py-12 animate-fade-in">
+        <main className="max-w-lg mx-auto px-5 py-12 animate-fade-up">
           <button onClick={() => setStep("menu")}
-            className="text-sm mb-8 flex items-center gap-2 btn-press transition-all group"
-            style={{ color: "#5C3D2E" }}>
-            <span className="w-8 h-8 rounded-full flex items-center justify-center transition-all group-hover:-translate-x-1" style={{
-              background: "#F5E6D3"
+            className="btn-press flex items-center gap-2.5 mb-8 group"
+            style={{ background: "none", border: "none", color: "#5C3D2E", cursor: "pointer", fontSize: "0.9rem", fontWeight: 500 }}>
+            <span style={{
+              width: 34, height: 34, borderRadius: "50%", background: "#EDE0D4",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "transform 0.2s"
             }}>←</span>
-            <span className="font-medium">Voltar ao cardápio</span>
+            Voltar ao cardápio
           </button>
-          
-          <div className="rounded-2xl p-8" style={{
+
+          <div style={{
             background: "#FFFFFF",
-            border: "1px solid rgba(212, 160, 74, 0.15)",
-            boxShadow: "0 8px 32px rgba(93, 60, 46, 0.08)"
+            borderRadius: 20,
+            border: "1px solid rgba(212,160,74,0.14)",
+            boxShadow: "0 8px 36px rgba(93,60,46,0.09)",
+            overflow: "hidden"
           }}>
-            <h2 className="font-display text-2xl font-bold mb-2" style={{ color: "#2D1810" }}>
-              Seus dados
-            </h2>
-            <p className="text-sm mb-8" style={{ color: "#7A6B5D" }}>Para o padeiro saber quem retira e quando.</p>
-            
-            <form onSubmit={submitOrder} className="space-y-6">
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wider flex items-center gap-2 mb-2" style={{ color: "#5C3D2E" }}>
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#D4A04A" }} /> Nome completo
+            {/* Form header */}
+            <div style={{ padding: "28px 28px 0" }}>
+              <h2 className="font-display" style={{ fontSize: "1.75rem", fontWeight: 700, color: "#2D1810", marginBottom: 6 }}>Seus dados</h2>
+              <p style={{ fontSize: "0.88rem", color: "#7A6B5D", marginBottom: 28 }}>Para o padeiro saber quem retira e quando.</p>
+            </div>
+
+            <form onSubmit={submitOrder} style={{ padding: "0 28px 28px" }}>
+              {[
+                { label: "Nome completo", key: "nome", placeholder: "Seu nome completo", type: "text" },
+                { label: "Telefone", key: "telefone", placeholder: "(18) 9XXXX-XXXX", type: "tel" },
+                { label: "Horário de retirada", key: "retirada", placeholder: "Ex: hoje às 17h", type: "text" },
+              ].map((field) => (
+                <div key={field.key} style={{ marginBottom: 18 }}>
+                  <label style={{ display: "block", fontSize: "0.73rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#5C3D2E", marginBottom: 7 }}>
+                    {field.label}
+                  </label>
+                  <input
+                    required
+                    type={field.type}
+                    value={customer[field.key]}
+                    onChange={(e) => setCustomer({ ...customer, [field.key]: e.target.value })}
+                    placeholder={field.placeholder}
+                    style={{
+                      width: "100%", padding: "12px 16px", borderRadius: 12,
+                      border: "1.5px solid rgba(212,160,74,0.2)",
+                      background: "#FDFBF8", color: "#2D1810", fontSize: "0.93rem",
+                      transition: "border-color 0.2s, box-shadow 0.2s", boxSizing: "border-box"
+                    }}
+                    onFocus={(e) => { e.target.style.borderColor = "#D4A04A"; e.target.style.boxShadow = "0 0 0 3px rgba(212,160,74,0.12)"; }}
+                    onBlur={(e) => { e.target.style.borderColor = "rgba(212,160,74,0.2)"; e.target.style.boxShadow = "none"; }}
+                  />
+                </div>
+              ))}
+
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: "block", fontSize: "0.73rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "#5C3D2E", marginBottom: 7 }}>
+                  Observações <span style={{ color: "#9A8A7A", fontWeight: 400, textTransform: "none" }}>(opcional)</span>
                 </label>
-                <input required value={customer.nome} onChange={(e) => setCustomer({ ...customer, nome: e.target.value })}
-                  className="w-full px-4 py-3.5 rounded-xl outline-none transition-all text-sm"
-                  style={{ 
-                    border: "1px solid rgba(212, 160, 74, 0.2)", 
-                    background: "#FDFBF8", 
-                    color: "#2D1810"
+                <textarea
+                  value={customer.obs}
+                  onChange={(e) => setCustomer({ ...customer, obs: e.target.value })}
+                  rows={3}
+                  placeholder="Ex: pão de queijo sem sal, sem glúten…"
+                  style={{
+                    width: "100%", padding: "12px 16px", borderRadius: 12,
+                    border: "1.5px solid rgba(212,160,74,0.2)",
+                    background: "#FDFBF8", color: "#2D1810", fontSize: "0.93rem",
+                    resize: "none", transition: "border-color 0.2s, box-shadow 0.2s", boxSizing: "border-box"
                   }}
-                  onFocus={(e) => e.target.style.borderColor = "#D4A04A"}
-                  onBlur={(e) => e.target.style.borderColor = "rgba(212, 160, 74, 0.2)"}
-                  placeholder="Seu nome completo" />
-              </div>
-              
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wider flex items-center gap-2 mb-2" style={{ color: "#5C3D2E" }}>
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#D4A04A" }} /> Telefone
-                </label>
-                <input required value={customer.telefone} onChange={(e) => setCustomer({ ...customer, telefone: e.target.value })}
-                  className="w-full px-4 py-3.5 rounded-xl outline-none transition-all text-sm"
-                  style={{ 
-                    border: "1px solid rgba(212, 160, 74, 0.2)", 
-                    background: "#FDFBF8", 
-                    color: "#2D1810"
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = "#D4A04A"}
-                  onBlur={(e) => e.target.style.borderColor = "rgba(212, 160, 74, 0.2)"}
-                  placeholder="(18) 9XXXX-XXXX" />
-              </div>
-              
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wider flex items-center gap-2 mb-2" style={{ color: "#5C3D2E" }}>
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#D4A04A" }} /> Horário de retirada
-                </label>
-                <input required value={customer.retirada} onChange={(e) => setCustomer({ ...customer, retirada: e.target.value })}
-                  className="w-full px-4 py-3.5 rounded-xl outline-none transition-all text-sm"
-                  style={{ 
-                    border: "1px solid rgba(212, 160, 74, 0.2)", 
-                    background: "#FDFBF8", 
-                    color: "#2D1810"
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = "#D4A04A"}
-                  onBlur={(e) => e.target.style.borderColor = "rgba(212, 160, 74, 0.2)"}
-                  placeholder="Ex: hoje às 17h" />
-              </div>
-              
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wider flex items-center gap-2 mb-2" style={{ color: "#5C3D2E" }}>
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#D4A04A" }} /> Observações
-                </label>
-                <textarea value={customer.obs} onChange={(e) => setCustomer({ ...customer, obs: e.target.value })}
-                  className="w-full px-4 py-3.5 rounded-xl outline-none transition-all text-sm resize-none"
-                  style={{ 
-                    border: "1px solid rgba(212, 160, 74, 0.2)", 
-                    background: "#FDFBF8", 
-                    color: "#2D1810"
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = "#D4A04A"}
-                  onBlur={(e) => e.target.style.borderColor = "rgba(212, 160, 74, 0.2)"}
-                  rows={3} placeholder="Ex: pão de queijo sem sal, sem glúten..." />
+                  onFocus={(e) => { e.target.style.borderColor = "#D4A04A"; e.target.style.boxShadow = "0 0 0 3px rgba(212,160,74,0.12)"; }}
+                  onBlur={(e) => { e.target.style.borderColor = "rgba(212,160,74,0.2)"; e.target.style.boxShadow = "none"; }}
+                />
               </div>
 
-              <div className="rounded-xl p-5 mt-6" style={{ 
-                background: "linear-gradient(135deg, #FDF8F0, #F5E6D3)", 
-                border: "1px solid rgba(212, 160, 74, 0.2)" 
+              {/* Order summary */}
+              <div style={{
+                background: "linear-gradient(135deg, #FDF8F0, #F7EDDF)",
+                border: "1px solid rgba(212,160,74,0.18)",
+                borderRadius: 14, padding: "16px 18px", marginBottom: 20
               }}>
-                <p className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: "#5C3D2E" }}>
-                  <ShoppingBag size={14} color="#D4A04A" />
-                  Resumo do pedido
+                <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#5C3D2E", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
+                  <ShoppingBag size={13} color="#D4A04A" /> Resumo do pedido
                 </p>
-                <div className="space-y-2">
-                  {cartItems.map((i) => (
-                    <div key={i.id} className="flex justify-between text-sm py-1.5" style={{ color: "#5C3D2E" }}>
-                      <span>{i.qty}x {i.name}</span>
-                      <span className="font-mono-ticket font-medium">{money(i.price * i.qty)}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-3 pt-3 flex justify-between font-bold text-lg" style={{ 
-                  borderTop: "2px solid rgba(212, 160, 74, 0.2)", 
-                  color: "#2D1810" 
-                }}>
+                {cartItems.map((i) => (
+                  <div key={i.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.88rem", color: "#5C3D2E", padding: "5px 0" }}>
+                    <span>{i.qty}x {i.name}</span>
+                    <span className="font-mono-ticket" style={{ fontWeight: 500 }}>{money(i.price * i.qty)}</span>
+                  </div>
+                ))}
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1.5px dashed rgba(212,160,74,0.25)", display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: "1.05rem", color: "#2D1810" }}>
                   <span>TOTAL</span>
                   <span className="font-mono-ticket" style={{ color: "#B85C1E" }}>{money(total)}</span>
                 </div>
               </div>
 
-              <button type="submit" disabled={itemCount === 0 || step === "enviando"}
-                className="w-full py-4 rounded-xl font-semibold text-base mt-4 disabled:opacity-40 btn-press transition-all"
+              <button type="submit" disabled={itemCount === 0 || step === "enviando"} className="btn-press btn-hover"
                 style={{
+                  width: "100%", padding: "15px", borderRadius: 14,
                   background: "linear-gradient(135deg, #2D1810, #4A2C1A)",
-                  color: "#FCF6F0",
-                  boxShadow: "0 6px 20px rgba(45, 24, 16, 0.3)"
+                  color: "#FFF8F0", fontWeight: 700, fontSize: "1rem",
+                  border: "none", cursor: "pointer",
+                  boxShadow: "0 6px 22px rgba(45,24,16,0.28)",
+                  opacity: itemCount === 0 ? 0.4 : 1
                 }}>
-                {step === "enviando" ? "Enviando..." : "Confirmar encomenda"}
+                {step === "enviando" ? "Enviando..." : "Confirmar encomenda →"}
               </button>
             </form>
           </div>
         </main>
       )}
 
+      {/* ═══ ENVIANDO ═══ */}
       {step === "enviando" && (
-        <main className="max-w-md mx-auto px-6 py-20 text-center animate-fade-in">
-          <Wheat size={40} color="#D4A04A" className="mx-auto mb-4 animate-pulse-slow" />
-          <p className="font-display text-xl" style={{ color: "#2D1810" }}>Enviando sua encomenda…</p>
+        <main className="max-w-md mx-auto px-6 py-24 text-center animate-fade-in">
+          <Wheat size={38} color="#D4A04A" style={{ margin: "0 auto 16px" }} className="animate-pulse-slow" />
+          <p className="font-display" style={{ fontSize: "1.3rem", color: "#2D1810" }}>Enviando sua encomenda…</p>
         </main>
       )}
 
+      {/* ═══ ENVIADO ═══ */}
       {step === "enviado" && (
-        <main className="max-w-lg mx-auto px-6 py-16 text-center animate-fade-in">
-          <div className="w-20 h-20 rounded-full mx-auto flex items-center justify-center animate-pop-in" style={{
+        <main className="max-w-lg mx-auto px-5 py-20 text-center animate-fade-up">
+          <div className="animate-pop-in" style={{
+            width: 80, height: 80, borderRadius: "50%", margin: "0 auto 28px",
             background: "linear-gradient(135deg, #4A7C59, #3D6B4E)",
-            boxShadow: "0 8px 32px rgba(74, 124, 89, 0.35)"
+            boxShadow: "0 10px 36px rgba(74,124,89,0.32)",
+            display: "flex", alignItems: "center", justifyContent: "center"
           }}>
-            <Check size={36} color="#FFFFFF" strokeWidth={2.5} />
+            <Check size={38} color="#FFFFFF" strokeWidth={2.5} />
           </div>
-          <h2 className="font-display text-3xl font-bold mt-8" style={{ color: "#2D1810" }}>Pedido confirmado!</h2>
-          <p className="text-base mt-4 leading-relaxed" style={{ color: "#7A6B5D" }}>
-            A comanda nº <b className="font-mono-ticket text-lg" style={{ color: "#B85C1E" }}>#{orderNumber}</b> já chegou na padaria.
+          <h2 className="font-display" style={{ fontSize: "2rem", fontWeight: 700, color: "#2D1810", marginBottom: 14 }}>Pedido confirmado!</h2>
+          <p style={{ fontSize: "1rem", color: "#7A6B5D", lineHeight: 1.7 }}>
+            A comanda nº <b className="font-mono-ticket" style={{ fontSize: "1.1rem", color: "#B85C1E" }}>#{orderNumber}</b> já chegou na padaria.
           </p>
-          <p className="text-sm mt-2" style={{ color: "#9A8A7A" }}>
-            A Rose vai confirmar com você em breve pelo telefone.
-          </p>
-          <div className="mt-10 flex flex-col items-center gap-4">
-            <a href="tel:+5518991914512" className="flex items-center gap-3 px-6 py-3.5 rounded-xl text-sm transition-all hover:scale-105" style={{ 
-              background: "#F5E6D3", 
-              border: "1px solid rgba(212, 160, 74, 0.2)",
-              color: "#5C3D2E" 
+          <p style={{ fontSize: "0.88rem", color: "#9A8A7A", marginTop: 8 }}>A Rose vai confirmar com você em breve pelo telefone.</p>
+          <div style={{ marginTop: 36, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+            <a href="tel:+5518991914512" style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "13px 24px", borderRadius: 14,
+              background: "#F2E8DC", border: "1px solid rgba(212,160,74,0.2)",
+              color: "#5C3D2E", textDecoration: "none", fontSize: "0.9rem", transition: "all 0.2s"
             }}>
-              <Phone size={16} color="#D4A04A" />
-              <span>Precisa falar? <strong>(18) 99191-4512</strong></span>
+              <Phone size={15} color="#D4A04A" />
+              Precisa falar? <strong>(18) 99191-4512</strong>
             </a>
             <button onClick={() => { setCart({}); setCustomer({ nome: "", telefone: "", retirada: "", obs: "" }); setStep("menu"); }}
-              className="px-8 py-3.5 rounded-full text-sm font-semibold btn-press transition-all"
+              className="btn-press"
               style={{
+                padding: "13px 32px", borderRadius: 100,
                 background: "linear-gradient(135deg, #2D1810, #4A2C1A)",
-                color: "#FCF6F0",
-                boxShadow: "0 6px 20px rgba(45, 24, 16, 0.3)"
+                color: "#FFF8F0", fontWeight: 600, fontSize: "0.9rem", border: "none", cursor: "pointer",
+                boxShadow: "0 6px 20px rgba(45,24,16,0.28)"
               }}>
               Fazer outra encomenda
             </button>
@@ -578,169 +588,177 @@ TOTAL: ${money(localOrder.total)}`;
         </main>
       )}
 
+      {/* ═══ FALLBACK ═══ */}
       {step === "fallback" && localOrder && (
-        <main className="max-w-md mx-auto px-6 py-10 animate-fade-in">
-          <div className="rounded-xl p-5 mb-6 text-center" style={{ background: "#FFF3E0", border: "1px solid #FFCC80" }}>
-            <AlertTriangle size={24} color="#E65100" className="mx-auto mb-2" />
-            <h3 className="font-display text-lg font-bold mb-1" style={{ color: "#BF360C" }}>Sistema temporariamente offline</h3>
-            <p className="text-sm" style={{ color: "#5C3D2E" }}>
-              Não foi possível conectar com a padaria automaticamente. Anote ou copie os dados do seu pedido e nos envie pelo WhatsApp ou ligue.
+        <main className="max-w-md mx-auto px-5 py-10 animate-fade-up">
+          <div style={{ borderRadius: 16, padding: "16px 20px", marginBottom: 20, background: "#FFF3E0", border: "1px solid #FFD08A", textAlign: "center" }}>
+            <AlertTriangle size={22} color="#D46B00" style={{ margin: "0 auto 8px" }} />
+            <h3 className="font-display" style={{ fontSize: "1.1rem", fontWeight: 700, color: "#B84A00", marginBottom: 6 }}>Sistema temporariamente offline</h3>
+            <p style={{ fontSize: "0.85rem", color: "#5C3D2E", lineHeight: 1.6 }}>
+              Não foi possível conectar automaticamente. Copie ou anote os dados e nos envie pelo WhatsApp.
             </p>
           </div>
 
-          <div className="rounded-2xl p-6 font-mono-ticket text-sm" style={{ background: "#FFFFFF", border: "1px solid #D4A04A44", boxShadow: "0 4px 20px rgba(93, 60, 46, 0.08)" }}>
-            <p className="font-semibold text-base" style={{ color: "#2D1810" }}>PADARIA DA ROSE</p>
-            <p className="mt-1" style={{ color: "#5C3D2E" }}>Pedido #{localOrder.id}</p>
-            <p className="text-xs" style={{ color: "#7A6B5D" }}>{localOrder.created_at}</p>
+          <div className="font-mono-ticket" style={{ background: "#FFFFFF", borderRadius: 18, padding: "22px 24px", border: "1px solid rgba(212,160,74,0.2)", boxShadow: "0 4px 20px rgba(93,60,46,0.07)" }}>
+            <p style={{ fontWeight: 700, fontSize: "1rem", color: "#2D1810" }}>PADARIA DA ROSE</p>
+            <p style={{ color: "#5C3D2E", marginTop: 2 }}>Pedido #{localOrder.id}</p>
+            <p style={{ fontSize: "0.78rem", color: "#7A6B5D" }}>{localOrder.created_at}</p>
             <BreadDivider />
-            <p style={{ color: "#2D1810" }}><strong>{localOrder.customer.nome}</strong></p>
+            <p style={{ color: "#2D1810", fontWeight: 600 }}>{localOrder.customer.nome}</p>
             <p style={{ color: "#5C3D2E" }}>{localOrder.customer.telefone}</p>
             <p style={{ color: "#5C3D2E" }}>Retirada: {localOrder.customer.retirada}</p>
-            {localOrder.customer.obs && (
-              <p className="mt-1 text-xs" style={{ color: "#7A6B5D" }}>Obs: {localOrder.customer.obs}</p>
-            )}
+            {localOrder.customer.obs && <p style={{ marginTop: 4, fontSize: "0.8rem", color: "#7A6B5D" }}>Obs: {localOrder.customer.obs}</p>}
             <BreadDivider />
             {localOrder.items.map((i, idx) => (
-              <div key={idx} className="flex justify-between py-1" style={{ color: "#2D1810" }}>
+              <div key={idx} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", color: "#2D1810" }}>
                 <span>{i.qty}x {i.name}</span>
                 <span>{money(i.price * i.qty)}</span>
               </div>
             ))}
             <BreadDivider />
-            <div className="flex justify-between font-semibold text-base" style={{ color: "#2D1810" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: "1.05rem", color: "#2D1810" }}>
               <span>TOTAL</span>
               <span>{money(localOrder.total)}</span>
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 mt-6">
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 20 }}>
             <a href="https://wa.me/5518991914512" target="_blank" rel="noopener noreferrer"
-              className="w-full py-3.5 rounded-xl font-semibold text-center btn-press transition-all flex items-center justify-center gap-2"
               style={{
+                width: "100%", padding: "14px", borderRadius: 14,
                 background: "linear-gradient(135deg, #4A7C59, #3D6B4E)",
-                color: "#FFFFFF",
-                boxShadow: "0 4px 12px rgba(74, 124, 89, 0.3)"
+                color: "#FFFFFF", fontWeight: 600, textAlign: "center",
+                display: "block", textDecoration: "none", boxShadow: "0 4px 14px rgba(74,124,89,0.28)"
               }}>
               Enviar pelo WhatsApp
             </a>
-            <button onClick={copyOrderDetails}
-              className="w-full py-3 rounded-xl font-medium btn-press transition-all flex items-center justify-center gap-2"
-              style={{ background: "#F5E6D3", color: "#5C3D2E", border: "1px solid #D4A04A44" }}>
-              {copied ? <><Check size={16} /> Copiado!</> : <><Copy size={16} /> Copiar pedido</>}
+            <button onClick={copyOrderDetails} className="btn-press"
+              style={{
+                width: "100%", padding: "12px", borderRadius: 14,
+                background: "#F2E8DC", color: "#5C3D2E", fontWeight: 500,
+                border: "1px solid rgba(212,160,74,0.2)", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8
+              }}>
+              {copied ? <><Check size={15} /> Copiado!</> : <><Copy size={15} /> Copiar pedido</>}
             </button>
             <button onClick={() => { setStep("menu"); setOrderError(null); }}
-              className="w-full py-2.5 rounded-xl text-sm font-medium btn-press"
-              style={{ color: "#7A6B5D" }}>
+              style={{ width: "100%", padding: "10px", borderRadius: 14, background: "none", color: "#7A6B5D", fontSize: "0.88rem", border: "none", cursor: "pointer" }}>
               Tentar novamente
             </button>
           </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-xs" style={{ color: "#7A6B5D" }}>Ou ligue: <strong style={{ color: "#5C3D2E" }}>(18) 99191-4512</strong></p>
-          </div>
+          <p style={{ textAlign: "center", fontSize: "0.8rem", color: "#7A6B5D", marginTop: 20 }}>
+            Ou ligue: <strong style={{ color: "#5C3D2E" }}>(18) 99191-4512</strong>
+          </p>
         </main>
       )}
 
+      {/* ═══ FLOATING CART BUTTON ═══ */}
       {step === "menu" && itemCount > 0 && (
-        <button onClick={() => setTicketOpen(true)}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 px-8 py-4 rounded-full shadow-xl z-30 btn-press transition-all hover:scale-105"
+        <button onClick={() => setTicketOpen(true)} className="animate-slide-up btn-press"
           style={{
+            position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
+            display: "flex", alignItems: "center", gap: 16,
+            padding: "14px 26px", borderRadius: 100,
             background: "linear-gradient(135deg, #2D1810, #4A2C1A)",
-            color: "#FCF6F0",
-            boxShadow: "0 8px 32px rgba(45, 24, 16, 0.4)"
+            color: "#FFF8F0", border: "none", cursor: "pointer",
+            boxShadow: "0 10px 36px rgba(45,24,16,0.42)",
+            zIndex: 30, whiteSpace: "nowrap"
           }}>
-          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{
-            background: "rgba(232, 195, 106, 0.2)"
-          }}>
-            <ShoppingBag size={16} color="#E8C36A" />
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(232,195,106,0.18)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <ShoppingBag size={15} color="#E8C36A" />
           </div>
-          <div className="flex flex-col items-start">
-            <span className="text-sm font-bold">{itemCount} {itemCount === 1 ? "item" : "itens"}</span>
-          </div>
-          <span className="w-px h-6" style={{ background: "rgba(232, 195, 106, 0.3)" }} />
-          <span className="font-mono-ticket text-base font-bold" style={{ color: "#E8C36A" }}>{money(total)}</span>
+          <span style={{ fontWeight: 700, fontSize: "0.9rem" }}>{itemCount} {itemCount === 1 ? "item" : "itens"}</span>
+          <span style={{ width: 1, height: 22, background: "rgba(232,195,106,0.25)" }} />
+          <span className="font-mono-ticket" style={{ fontWeight: 700, color: "#E8C36A", fontSize: "1rem" }}>{money(total)}</span>
         </button>
       )}
 
+      {/* ═══ CART MODAL ═══ */}
       {ticketOpen && (
-        <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center animate-fade-in" style={{ background: "rgba(45, 24, 16, 0.7)" }}>
-          <div className="w-full sm:w-[420px] max-h-[85vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl animate-fade-in" style={{ 
+        <div className="animate-fade-in" style={{
+          position: "fixed", inset: 0, zIndex: 40,
+          display: "flex", alignItems: "flex-end", justifyContent: "center",
+          background: "rgba(20,10,5,0.72)"
+        }} onClick={(e) => { if (e.target === e.currentTarget) setTicketOpen(false); }}>
+          <div className="animate-slide-up" style={{
+            width: "100%", maxWidth: 440, maxHeight: "88vh",
+            overflowY: "auto", borderRadius: "24px 24px 0 0",
             background: "#FFFFFF",
-            boxShadow: "0 -8px 40px rgba(0, 0, 0, 0.2)"
+            boxShadow: "0 -12px 48px rgba(0,0,0,0.22)"
           }}>
-            <div className="p-6 font-mono-ticket" style={{ color: "#2D1810" }}>
-              <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{
-                    background: "linear-gradient(135deg, #D4A04A, #E8C36A)"
-                  }}>
+            {/* Handle */}
+            <div style={{ display: "flex", justifyContent: "center", paddingTop: 12, paddingBottom: 4 }}>
+              <div style={{ width: 40, height: 4, borderRadius: 2, background: "#E8DDD5" }} />
+            </div>
+
+            <div style={{ padding: "12px 24px 28px" }}>
+              {/* Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, #D4A04A, #E8C36A)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <ShoppingBag size={18} color="#FFFFFF" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold" style={{ color: "#2D1810" }}>Seu Pedido</p>
-                    <p className="text-xs" style={{ color: "#9A8A7A" }}>{new Date().toLocaleString("pt-BR")}</p>
+                    <p style={{ fontWeight: 700, color: "#2D1810", fontSize: "1rem" }}>Seu Pedido</p>
+                    <p style={{ fontSize: "0.75rem", color: "#9A8A7A" }}>{new Date().toLocaleString("pt-BR")}</p>
                   </div>
                 </div>
-                <button onClick={() => setTicketOpen(false)} className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{
-                  background: "#F5E6D3"
-                }}>
-                  <X size={16} color="#5C3D2E" />
+                <button onClick={() => setTicketOpen(false)} className="btn-press"
+                  style={{ width: 36, height: 36, borderRadius: "50%", background: "#F2E8DC", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <X size={15} color="#5C3D2E" />
                 </button>
               </div>
-              
-              <div className="border-t border-dashed" style={{ borderColor: "rgba(212, 160, 74, 0.3)" }} />
-              
-              <div className="py-5 space-y-3 text-sm">
+
+              <div style={{ height: 1, background: "repeating-linear-gradient(90deg, rgba(212,160,74,0.3) 0, rgba(212,160,74,0.3) 6px, transparent 6px, transparent 12px)" }} />
+
+              {/* Items */}
+              <div style={{ padding: "16px 0", display: "flex", flexDirection: "column", gap: 6 }}>
                 {cartItems.length === 0 && (
-                  <div className="text-center py-8">
-                    <ShoppingBag size={32} color="#D4A04A" className="mx-auto mb-3 opacity-30" />
-                    <p style={{ color: "#9A8A7A" }}>Sua comanda está vazia.</p>
+                  <div style={{ textAlign: "center", padding: "32px 0" }}>
+                    <ShoppingBag size={30} color="#D4A04A" style={{ margin: "0 auto 10px", opacity: 0.3 }} />
+                    <p style={{ color: "#9A8A7A", fontSize: "0.9rem" }}>Sua comanda está vazia.</p>
                   </div>
                 )}
                 {cartItems.map((i) => (
-                  <div key={i.id} className="flex justify-between items-center py-2">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1.5">
-                        <button onClick={() => removeItem(i.id)}
-                          className="w-6 h-6 rounded-full flex items-center justify-center btn-press transition-all"
-                          style={{ 
-                            background: "#F5E6D3",
-                            border: "1px solid rgba(212, 160, 74, 0.2)"
-                          }}>
+                  <div key={i.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <button onClick={() => removeItem(i.id)} className="btn-press"
+                          style={{ width: 26, height: 26, borderRadius: "50%", background: "#F2E8DC", border: "1px solid rgba(212,160,74,0.2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <Minus size={10} color="#5C3D2E" />
                         </button>
-                        <span className="w-6 text-center text-sm font-bold">{i.qty}</span>
-                        <button onClick={() => addItem(i.id)}
-                          className="w-6 h-6 rounded-full flex items-center justify-center btn-press transition-all"
-                          style={{ 
-                            background: "#5C3D2E",
-                            color: "#FFFFFF"
-                          }}>
-                          <Plus size={10} />
+                        <span className="font-mono-ticket" style={{ fontWeight: 700, fontSize: "0.95rem", width: 22, textAlign: "center", color: "#2D1810" }}>{i.qty}</span>
+                        <button onClick={() => addItem(i.id)} className="btn-press"
+                          style={{ width: 26, height: 26, borderRadius: "50%", background: "#2D1810", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Plus size={10} color="#FFFFFF" />
                         </button>
                       </div>
-                      <span className="flex-1 ml-2 font-medium" style={{ color: "#2D1810" }}>{i.name}</span>
+                      <span style={{ fontWeight: 500, color: "#2D1810", fontSize: "0.9rem" }}>{i.name}</span>
                     </div>
-                    <span className="font-bold" style={{ color: "#B85C1E" }}>{money(i.price * i.qty)}</span>
+                    <span className="font-mono-ticket" style={{ fontWeight: 700, color: "#B85C1E", fontSize: "0.9rem" }}>{money(i.price * i.qty)}</span>
                   </div>
                 ))}
               </div>
-              
-              <div className="border-t border-dashed" style={{ borderColor: "rgba(212, 160, 74, 0.3)" }} />
-              
-              <div className="flex justify-between items-center py-4 text-lg font-bold">
+
+              <div style={{ height: 1, background: "repeating-linear-gradient(90deg, rgba(212,160,74,0.3) 0, rgba(212,160,74,0.3) 6px, transparent 6px, transparent 12px)" }} />
+
+              {/* Total */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 0", fontWeight: 700, fontSize: "1.1rem" }}>
                 <span style={{ color: "#2D1810" }}>TOTAL</span>
-                <span className="font-mono-ticket" style={{ color: "#B85C1E" }}>{money(total)}</span>
+                <span className="font-mono-ticket" style={{ color: "#B85C1E", fontSize: "1.15rem" }}>{money(total)}</span>
               </div>
-              
-              <button onClick={() => { setTicketOpen(false); setStep("dados"); }} disabled={itemCount === 0}
-                className="w-full py-4 rounded-xl font-semibold text-base mt-3 disabled:opacity-40 btn-press transition-all"
+
+              <button onClick={() => { setTicketOpen(false); setStep("dados"); }} disabled={itemCount === 0} className="btn-press btn-hover"
                 style={{
+                  width: "100%", padding: "15px", borderRadius: 14, marginTop: 4,
                   background: "linear-gradient(135deg, #2D1810, #4A2C1A)",
-                  color: "#FCF6F0",
-                  boxShadow: "0 6px 20px rgba(45, 24, 16, 0.3)"
+                  color: "#FFF8F0", fontWeight: 700, fontSize: "1rem",
+                  border: "none", cursor: itemCount === 0 ? "not-allowed" : "pointer",
+                  boxShadow: "0 6px 22px rgba(45,24,16,0.28)",
+                  opacity: itemCount === 0 ? 0.4 : 1
                 }}>
-                Continuar para os dados
+                Continuar para os dados →
               </button>
             </div>
           </div>
