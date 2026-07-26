@@ -18,6 +18,8 @@ create table products (
   category text not null, -- 'paes' | 'domingo' | 'bolos'
   available boolean not null default true,
   image_url text,
+  has_obs boolean not null default false,
+  obs_label text default 'Observação',
   created_at timestamptz not null default now()
 );
 
@@ -115,7 +117,8 @@ create table order_items (
   order_id bigint not null references orders(id) on delete cascade,
   product_name text not null,
   qty int not null default 1,
-  unit_price numeric(10,2) not null default 0
+  unit_price numeric(10,2) not null default 0,
+  observation text default ''
 );
 
 alter table order_items enable row level security;
@@ -143,25 +146,61 @@ create policy "admin pode deletar itens do pedido"
   using (true);
 
 -- ------------------------------------------------------------
+-- CHAT CLIENTE ↔ VENDEDOR
+-- ------------------------------------------------------------
+create table chat_messages (
+  id bigint generated always as identity primary key,
+  order_id bigint references orders(id) on delete set null,
+  employee_slug text not null,
+  sender text not null, -- 'customer' | 'seller'
+  sender_name text not null default '',
+  message text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table chat_messages enable row level security;
+
+create policy "clientes podem enviar mensagem"
+  on chat_messages for insert
+  to anon
+  with check (true);
+
+create policy "authenticated pode enviar mensagem"
+  on chat_messages for insert
+  to authenticated
+  with check (true);
+
+create policy "anon pode ler mensagens"
+  on chat_messages for select
+  to anon
+  using (true);
+
+create policy "authenticated pode ler mensagens"
+  on chat_messages for select
+  to authenticated
+  using (true);
+
+-- ------------------------------------------------------------
 -- LIGAR O TEMPO REAL (para o som + impressão automática no admin)
 -- ------------------------------------------------------------
 alter publication supabase_realtime add table orders;
 alter publication supabase_realtime add table order_items;
+alter publication supabase_realtime add table chat_messages;
 
 -- ------------------------------------------------------------
 -- Alguns produtos de exemplo (apague depois de cadastrar os reais)
 -- ------------------------------------------------------------
-insert into products (name, description, price, unit, category, available) values
-  ('Pão francês', 'Casquinha crocante, feito na hora', 1.00, 'unid.', 'paes', true),
-  ('Pão de queijo', 'Receita da casa, forno a lenha', 2.50, 'unid.', 'paes', true),
-  ('Pão de brioche', 'Macio e amanteigado, sob encomenda', 12.00, 'unid.', 'paes', true),
-  ('Pão de hambúrguer', 'Vendido em pacotes de 4', 14.00, 'pacote', 'paes', true),
-  ('Pão caseiro', 'Pão grande de forma, receita tradicional', 10.00, 'unid.', 'paes', false),
-  ('Costela assada', 'Somente aos domingos', 45.00, 'kg', 'domingo', true),
-  ('Frango assado', 'Temperado e assado no forno da casa', 32.00, 'unid.', 'domingo', true),
-  ('Porco assado', 'Somente aos domingos', 48.00, 'kg', 'domingo', false),
-  ('Bolo de chocolate', 'Fatia generosa ou bolo inteiro', 8.00, 'fatia', 'bolos', true),
-  ('Docinhos variados', 'Brigadeiro, beijinho e cajuzinho — caixa com 12', 18.00, 'caixa', 'bolos', true);
+insert into products (name, description, price, unit, category, available, has_obs, obs_label) values
+  ('Pão francês', 'Casquinha crocante, feito na hora', 1.00, 'unid.', 'paes', true, false, 'Observação'),
+  ('Pão de queijo', 'Receita da casa, forno a lenha', 2.50, 'unid.', 'paes', true, false, 'Observação'),
+  ('Pão de brioche', 'Macio e amanteigado, sob encomenda', 12.00, 'unid.', 'paes', true, false, 'Observação'),
+  ('Pão de hambúrguer', 'Vendido em pacotes de 4', 14.00, 'pacote', 'paes', true, false, 'Observação'),
+  ('Pão caseiro', 'Pão grande de forma, receita tradicional', 10.00, 'unid.', 'paes', false, false, 'Observação'),
+  ('Costela assada', 'Somente aos domingos', 45.00, 'kg', 'domingo', true, true, 'Como deseja a costela?'),
+  ('Frango assado', 'Temperado e assado no forno da casa', 32.00, 'unid.', 'domingo', true, false, 'Observação'),
+  ('Porco assado', 'Somente aos domingos', 48.00, 'kg', 'domingo', true, true, 'Como deseja o porco?'),
+  ('Bolo de chocolate', 'Fatia generosa ou bolo inteiro', 8.00, 'fatia', 'bolos', true, true, 'Fatia ou bolo inteiro?'),
+  ('Docinhos variados', 'Brigadeiro, beijinho e cajuzinho — caixa com 12', 18.00, 'caixa', 'bolos', true, false, 'Observação');
 
 -- ============================================================
 -- DEPOIS DE RODAR ESTE ARQUIVO:

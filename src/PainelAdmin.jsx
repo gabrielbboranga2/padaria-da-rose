@@ -3,7 +3,7 @@ import {
   Lock, LogOut, Package, ShoppingBag, Users, Plus, Trash2, Printer,
   Copy, Check, Wheat, ChevronDown, Bell, TrendingUp, Clock, AlertCircle,
   RefreshCw, Edit3, ToggleLeft, ToggleRight, Link2, Search, Zap, Coffee,
-  Star, Activity, ArrowUpRight, BarChart2, Sparkles
+  Star, Activity, ArrowUpRight, BarChart2, Sparkles, MessageCircle, Send
 } from "lucide-react";
 import { supabase } from "./lib/supabaseClient";
 
@@ -29,7 +29,6 @@ const STATUS_CONFIG = {
   cancelado:  { label: "Cancelado",  bg: "rgba(248,113,113,0.12)", color: "#F87171", dot: "#EF4444",  glow: "rgba(239,68,68,0.4)"   },
 };
 
-/* ── GLOBAL STYLES ─────────────────────────────────────────── */
 const GLOBAL_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
@@ -45,7 +44,6 @@ const GLOBAL_CSS = `
   .font-display { font-family: 'Syne', sans-serif; }
   .font-mono    { font-family: 'JetBrains Mono', monospace; }
 
-  /* ─── Animations ─── */
   @keyframes fadeUp   { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
   @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
   @keyframes pulse    { 0%,100% { opacity:.5; } 50% { opacity:1; } }
@@ -65,7 +63,6 @@ const GLOBAL_CSS = `
   .animate-new-order { animation: newOrder .6s ease; }
   .dot-pulse         { animation: dotPulse 1.8s ease-in-out infinite; }
 
-  /* ─── Reusable utilities ─── */
   .glass {
     background: rgba(255,255,255,0.035);
     backdrop-filter: blur(14px);
@@ -128,14 +125,12 @@ const GLOBAL_CSS = `
 
   select.input-dark { appearance: none; }
 
-  /* ─── Status bar gradient map ─── */
   .bar-novo       { background: linear-gradient(90deg,#6366F1,#818CF8); }
   .bar-preparando { background: linear-gradient(90deg,#F97316,#FBBF24); }
   .bar-pronto     { background: linear-gradient(90deg,#10B981,#34D399); }
   .bar-entregue   { background: linear-gradient(90deg,#475569,#64748B); }
   .bar-cancelado  { background: linear-gradient(90deg,#EF4444,#F87171); }
 
-  /* ─── Scrollbar ─── */
   ::-webkit-scrollbar { width:5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius:3px; }
@@ -143,7 +138,15 @@ const GLOBAL_CSS = `
   @media print {
     body * { visibility: hidden; }
     .comanda-print, .comanda-print * { visibility: visible; }
-    .comanda-print { position: fixed; top: 0; left: 0; width: 280px; }
+    .comanda-print { 
+      position: fixed; top: 0; left: 0; 
+      width: 80mm; font-family: monospace;
+      font-size: 12px; line-height: 1.4;
+      color: #000; background: #fff;
+      padding: 0; margin: 0;
+    }
+    .comanda-print p { margin: 2px 0; white-space: pre-wrap; }
+    .comanda-print .divider { border-top: 1px dashed #000; margin: 6px 0; }
   }
 `;
 
@@ -163,19 +166,18 @@ export default function PainelAdmin() {
     { id: "pedidos",      label: "Pedidos",      icon: ShoppingBag },
     { id: "produtos",     label: "Produtos",     icon: Package     },
     { id: "funcionarios", label: "Funcionários", icon: Users       },
+    { id: "chat",         label: "Chat",         icon: MessageCircle },
   ];
 
   return (
     <div style={{ minHeight: "100vh", background: "#080B14" }}>
       <style>{GLOBAL_CSS}</style>
 
-      {/* Ambient blobs */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
         <div style={{ position: "absolute", top: "-15%", left: "-10%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%)" }} />
         <div style={{ position: "absolute", bottom: "-10%", right: "-5%",  width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(232,195,106,0.05) 0%, transparent 70%)" }} />
       </div>
 
-      {/* ═══ TOPBAR ═══ */}
       <header style={{
         position: "sticky", top: 0, zIndex: 50,
         background: "rgba(8,11,20,0.85)",
@@ -183,7 +185,6 @@ export default function PainelAdmin() {
         borderBottom: "1px solid rgba(255,255,255,0.06)",
       }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 28px", height: 68, display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
-          {/* Brand */}
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <div style={{
               width: 42, height: 42, borderRadius: "50%", overflow: "hidden",
@@ -199,21 +200,18 @@ export default function PainelAdmin() {
             </div>
           </div>
 
-          {/* Live indicator */}
           <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 100, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)" }}>
             <span className="dot-pulse" style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981", display: "block" }} />
             <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#34D399", letterSpacing: "0.04em" }}>ONLINE</span>
           </div>
 
-          {/* Logout */}
           <button onClick={() => supabase.auth.signOut()} className="btn-ghost"
             style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 100, fontSize: "0.82rem", fontWeight: 500 }}>
             <LogOut size={13} /> Sair
           </button>
         </div>
 
-        {/* Tabs */}
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 28px", display: "flex", gap: 2, position: "relative", zIndex: 1 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 28px", display: "flex", gap: 2, position: "relative", zIndex: 1, overflowX: "auto" }}>
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.id;
@@ -226,7 +224,7 @@ export default function PainelAdmin() {
                   background: "none", border: "none", cursor: "pointer",
                   borderBottom: active ? "2px solid #E8C36A" : "2px solid transparent",
                   marginBottom: -1, borderRadius: "6px 6px 0 0",
-                  transition: "all .2s"
+                  transition: "all .2s", whiteSpace: "nowrap"
                 }}>
                 <Icon size={14} /> {t.label}
               </button>
@@ -235,11 +233,11 @@ export default function PainelAdmin() {
         </div>
       </header>
 
-      {/* ═══ CONTENT ═══ */}
       <main style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 28px 80px", position: "relative", zIndex: 1 }}>
         {tab === "pedidos"      && <AbaPedidos />}
         {tab === "produtos"     && <AbaProdutos />}
         {tab === "funcionarios" && <AbaFuncionarios />}
+        {tab === "chat"         && <AbaChat />}
       </main>
     </div>
   );
@@ -247,7 +245,7 @@ export default function PainelAdmin() {
 
 /* ═══════════════════════════════════════════════
    LOGIN
-═══════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════ */
 function TelaLogin() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -270,7 +268,6 @@ function TelaLogin() {
     }}>
       <style>{GLOBAL_CSS}</style>
 
-      {/* Background art */}
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
         <div style={{ position: "absolute", top: "20%", left: "15%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,.12) 0%, transparent 70%)" }} />
         <div style={{ position: "absolute", bottom: "15%", right: "10%", width: 350, height: 350, borderRadius: "50%", background: "radial-gradient(circle, rgba(232,195,106,.08) 0%, transparent 70%)" }} />
@@ -278,7 +275,6 @@ function TelaLogin() {
       </div>
 
       <div style={{ width: "100%", maxWidth: 400, position: "relative", zIndex: 1 }} className="animate-fade-up">
-        {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: 36 }}>
           <div style={{
             width: 88, height: 88, borderRadius: "50%", overflow: "hidden",
@@ -293,12 +289,9 @@ function TelaLogin() {
           <p style={{ fontSize: "0.82rem", color: "#475569" }}>Área restrita — acesso autorizado</p>
         </div>
 
-        {/* Card */}
         <div style={{
           background: "linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
-          border: "1px solid rgba(255,255,255,0.09)",
-          borderRadius: 24,
-          padding: "32px 28px",
+          border: "1px solid rgba(255,255,255,0.09)", borderRadius: 24, padding: "32px 28px",
           boxShadow: "0 24px 64px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.07)",
           backdropFilter: "blur(12px)"
         }}>
@@ -343,7 +336,7 @@ function TelaLogin() {
 
 /* ═══════════════════════════════════════════════
    ABA PEDIDOS
-═══════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════ */
 function AbaPedidos() {
   const [pedidos, setPedidos] = useState([]);
   const printRef = useRef(null);
@@ -415,7 +408,6 @@ function AbaPedidos() {
 
   return (
     <div className="animate-fade-up">
-      {/* Header row */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
         <div>
           <h2 className="font-display" style={{ fontSize: "1.6rem", fontWeight: 700, color: "#F1F5F9", letterSpacing: "-0.02em", marginBottom: 4 }}>
@@ -441,7 +433,6 @@ function AbaPedidos() {
         </div>
       </div>
 
-      {/* Stats grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 28 }}>
         {[
           { label: "Novos pedidos",   value: novos,            icon: Bell,       accent: "#6366F1", glow: "rgba(99,102,241,.25)",  sub: "aguardando" },
@@ -473,7 +464,6 @@ function AbaPedidos() {
         })}
       </div>
 
-      {/* Notification bar */}
       <div style={{
         display: "flex", alignItems: "center", gap: 10, padding: "13px 18px",
         borderRadius: 14, background: "rgba(232,195,106,0.06)",
@@ -486,7 +476,6 @@ function AbaPedidos() {
         </p>
       </div>
 
-      {/* Pedidos list */}
       {carregando ? (
         <div style={{ textAlign: "center", padding: "80px 0" }}>
           <Wheat size={32} color="#E8C36A" style={{ margin: "0 auto 12px", display: "block", opacity: .5, animation: "spin 2s linear infinite" }} />
@@ -510,7 +499,6 @@ function AbaPedidos() {
                   transition: "all .3s ease",
                   animation: isNew ? "borderGlow 1s ease-in-out infinite" : "none"
                 }}>
-                {/* Status strip */}
                 <div style={{ height: 3 }} className={`bar-${p.status}`} />
 
                 <div style={{ padding: "18px 22px" }}>
@@ -578,7 +566,9 @@ function AbaPedidos() {
                             background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
                             fontSize: "0.79rem", color: "#94A3B8"
                           }}>
-                            <strong style={{ color: "#CBD5E1" }}>{it.qty}×</strong> {it.product_name} · <span className="font-mono" style={{ fontSize: "0.74rem", color: "#E8C36A" }}>{money(it.unit_price * it.qty)}</span>
+                            <strong style={{ color: "#CBD5E1" }}>{it.qty}×</strong> {it.product_name}
+                            {it.observation && <span style={{ color: "#FBBF24", fontStyle: "italic" }}> ({it.observation})</span>}
+                            {' '}· <span className="font-mono" style={{ fontSize: "0.74rem", color: "#E8C36A" }}>{money(it.unit_price * it.qty)}</span>
                           </span>
                         ))}
                       </div>
@@ -597,22 +587,29 @@ function AbaPedidos() {
         </div>
       )}
 
-      {/* Print area */}
+      {/* Print area — formatted for TANCA TP-550 (80mm) */}
       {pedidoImpresso && (
-        <div ref={printRef} className="comanda-print font-mono" style={{ display: "none" }}>
-          <div className="comanda-print" style={{ padding: 12 }}>
-            <p style={{ fontWeight: 700 }}>PADARIA DA ROSE</p>
-            <p>Pedido #{pedidoImpresso.id}</p>
-            <p>{pedidoImpresso.customer_name} — {pedidoImpresso.customer_phone}</p>
-            <p>Retirada: {pedidoImpresso.pickup_time}</p>
-            {pedidoImpresso.employee_slug && <p>via: {pedidoImpresso.employee_slug}</p>}
-            <p>------------------------------</p>
+        <div ref={printRef} className="comanda-print" style={{ display: "none" }}>
+          <div className="comanda-print" style={{ padding: "4mm" }}>
+            <p style={{ textAlign: "center", fontWeight: 700, fontSize: "14px" }}>PADARIA DA ROSE</p>
+            <p style={{ textAlign: "center", fontSize: "10px" }}>Pedido #{pedidoImpresso.id}</p>
+            <p style={{ textAlign: "center", fontSize: "10px" }}>{new Date(pedidoImpresso.created_at).toLocaleString("pt-BR")}</p>
+            <div className="divider" />
+            <p style={{ fontWeight: 600 }}>{pedidoImpresso.customer_name}</p>
+            <p>{pedidoImpresso.customer_phone}</p>
+            <p>Retirada: {pedidoImpresso.pickup_time || "-"}</p>
+            {pedidoImpresso.employee_slug && <p>Via: {pedidoImpresso.employee_slug}</p>}
+            <div className="divider" />
             {(pedidoImpresso.order_items || []).map((it) => (
-              <p key={it.id}>{it.qty}x {it.product_name} — {money(it.unit_price * it.qty)}</p>
+              <div key={it.id} style={{ marginBottom: 3 }}>
+                <p style={{ fontWeight: 600 }}>{it.qty}x {it.product_name} — {money(it.unit_price * it.qty)}</p>
+                {it.observation && <p style={{ fontSize: "10px", fontStyle: "italic", paddingLeft: "4mm" }}>→ {it.observation}</p>}
+              </div>
             ))}
-            <p>------------------------------</p>
-            <p style={{ fontWeight: 700 }}>TOTAL: {money(pedidoImpresso.total)}</p>
-            {pedidoImpresso.notes && <p>Obs: {pedidoImpresso.notes}</p>}
+            <div className="divider" />
+            <p style={{ fontWeight: 700, fontSize: "13px" }}>TOTAL: {money(pedidoImpresso.total)}</p>
+            {pedidoImpresso.notes && <p style={{ fontSize: "10px", fontStyle: "italic" }}>Obs: {pedidoImpresso.notes}</p>}
+            <div style={{ height: "8mm" }} />
           </div>
         </div>
       )}
@@ -622,10 +619,10 @@ function AbaPedidos() {
 
 /* ═══════════════════════════════════════════════
    ABA PRODUTOS
-═══════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════ */
 function AbaProdutos() {
   const [produtos, setProdutos] = useState([]);
-  const [novo, setNovo] = useState({ name: "", description: "", price: "", unit: "unid.", category: "paes" });
+  const [novo, setNovo] = useState({ name: "", description: "", price: "", unit: "unid.", category: "paes", has_obs: false, obs_label: "Observação" });
   const [formOpen, setFormOpen] = useState(false);
 
   const carregar = async () => {
@@ -636,8 +633,11 @@ function AbaProdutos() {
 
   const adicionar = async (e) => {
     e.preventDefault();
-    await supabase.from("products").insert({ ...novo, price: Number(novo.price) });
-    setNovo({ name: "", description: "", price: "", unit: "unid.", category: "paes" });
+    await supabase.from("products").insert({
+      name: novo.name, description: novo.description, price: Number(novo.price),
+      unit: novo.unit, category: novo.category, has_obs: novo.has_obs, obs_label: novo.obs_label
+    });
+    setNovo({ name: "", description: "", price: "", unit: "unid.", category: "paes", has_obs: false, obs_label: "Observação" });
     setFormOpen(false);
     carregar();
   };
@@ -655,6 +655,10 @@ function AbaProdutos() {
 
   const atualizarPreco = async (id, price) => {
     await supabase.from("products").update({ price: Number(price) }).eq("id", id);
+  };
+
+  const atualizarObs = async (id, hasObs, obsLabel) => {
+    await supabase.from("products").update({ has_obs: hasObs, obs_label: obsLabel }).eq("id", id);
   };
 
   const catLabel = { paes: "Pães", domingo: "Domingo", bolos: "Bolos & Doces" };
@@ -677,7 +681,6 @@ function AbaProdutos() {
         </button>
       </div>
 
-      {/* Add form */}
       {formOpen && (
         <div className="glass-card animate-fade-up" style={{ padding: "24px 26px", marginBottom: 24 }}>
           <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#E2E8F0", marginBottom: 18 }}>✦ Adicionar produto</h3>
@@ -694,7 +697,7 @@ function AbaProdutos() {
                   className="input-dark" style={{ padding: "11px 14px", fontSize: "0.9rem" }} />
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 18 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
               <div style={{ position: "relative" }}>
                 <select value={novo.category} onChange={(e) => setNovo({ ...novo, category: e.target.value })}
                   className="input-dark" style={{ padding: "11px 34px 11px 14px", fontSize: "0.9rem" }}>
@@ -708,6 +711,32 @@ function AbaProdutos() {
                 onChange={(e) => setNovo({ ...novo, unit: e.target.value })}
                 className="input-dark" style={{ padding: "11px 14px", fontSize: "0.9rem" }} />
             </div>
+
+            {/* Observação do produto */}
+            <div style={{ 
+              padding: "14px 16px", borderRadius: 12, marginBottom: 18,
+              background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.12)"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <button type="button" onClick={() => setNovo({ ...novo, has_obs: !novo.has_obs })}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "6px 13px", borderRadius: 9, border: "none", cursor: "pointer",
+                    fontSize: "0.77rem", fontWeight: 600, transition: "all .18s",
+                  background: novo.has_obs ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.05)",
+                  color: novo.has_obs ? "#34D399" : "#64748B"
+                }}>
+                  {novo.has_obs ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                  {novo.has_obs ? "Observação ativada" : "Observação desativada"}
+                </button>
+              </div>
+              {novo.has_obs && (
+                <input placeholder="Texto da observação (ex: Como deseja?)" value={novo.obs_label}
+                  onChange={(e) => setNovo({ ...novo, obs_label: e.target.value })}
+                  className="input-dark" style={{ padding: "10px 14px", fontSize: "0.88rem" }} />
+              )}
+            </div>
+
             <div style={{ display: "flex", gap: 10 }}>
               <button type="submit" className="btn-primary" style={{ padding: "11px 26px", borderRadius: 11, fontSize: "0.88rem" }}>
                 Salvar produto
@@ -723,8 +752,8 @@ function AbaProdutos() {
 
       {/* Table */}
       <div style={{ background: "linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 18, overflow: "hidden" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 100px 1fr auto", gap: 0, padding: "13px 22px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
-          {["Nome", "Categoria", "Preço", "Unidade", "Status", ""].map((h) => (
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 100px 80px 1fr auto", gap: 0, padding: "13px 22px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
+          {["Nome", "Categoria", "Preço", "Unidade", "Obs", "Status", ""].map((h) => (
             <span key={h} style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#334155" }}>{h}</span>
           ))}
         </div>
@@ -733,7 +762,7 @@ function AbaProdutos() {
           const cs = catStyles[p.category] || catStyles.paes;
           return (
             <div key={p.id} style={{
-              display: "grid", gridTemplateColumns: "2fr 1fr 1fr 100px 1fr auto",
+              display: "grid", gridTemplateColumns: "2fr 1fr 1fr 100px 80px 1fr auto",
               gap: 0, padding: "15px 22px", alignItems: "center",
               borderBottom: i < produtos.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
               transition: "background .2s",
@@ -754,15 +783,15 @@ function AbaProdutos() {
                 className="input-dark font-mono"
                 style={{ width: 95, padding: "7px 10px", fontSize: "0.84rem", color: "#E8C36A" }} />
               <span style={{ fontSize: "0.82rem", color: "#475569" }}>{p.unit}</span>
+              <ObsToggle product={p} onSave={atualizarObs} />
               <button onClick={() => alternarDisponibilidade(p)}
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 6,
                   padding: "6px 13px", borderRadius: 9, border: "none", cursor: "pointer",
                   fontSize: "0.77rem", fontWeight: 600, transition: "all .18s",
-                  background: p.available ? "rgba(16,185,129,0.12)" : "rgba(239,68,68,0.12)",
-                  color: p.available ? "#34D399" : "#F87171",
-                  border: `1px solid ${p.available ? "rgba(16,185,129,0.25)" : "rgba(239,68,68,0.25)"}`
-                }}>
+                background: p.available ? "rgba(16,185,129,0.12)" : "rgba(239,68,68,0.12)",
+                color: p.available ? "#34D399" : "#F87171"
+              }}>
                 {p.available ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
                 {p.available ? "Disponível" : "Indisponível"}
               </button>
@@ -787,9 +816,73 @@ function AbaProdutos() {
   );
 }
 
+function ObsToggle({ product, onSave }) {
+  const [editing, setEditing] = useState(false);
+  const [hasObs, setHasObs] = useState(product.has_obs || false);
+  const [obsLabel, setObsLabel] = useState(product.obs_label || "Observação");
+
+  const handleSave = () => {
+    onSave(product.id, hasObs, obsLabel);
+    setEditing(false);
+  };
+
+  return (
+    <div style={{ position: "relative" }}>
+      <button onClick={() => setEditing(!editing)}
+        style={{
+          display: "inline-flex", alignItems: "center", gap: 4,
+          padding: "5px 10px", borderRadius: 8, border: "none", cursor: "pointer",
+          fontSize: "0.72rem", fontWeight: 600, transition: "all .18s",
+            background: hasObs ? "rgba(99,102,241,0.12)" : "rgba(255,255,255,0.04)",
+            color: hasObs ? "#818CF8" : "#475569"
+          }}>
+        {hasObs ? "✓ Obs" : "—"}
+      </button>
+      {editing && (
+        <div style={{
+          position: "absolute", top: "100%", left: 0, zIndex: 10,
+          marginTop: 6, padding: 12, borderRadius: 12,
+          background: "rgba(15,18,30,0.95)", border: "1px solid rgba(99,102,241,0.3)",
+          backdropFilter: "blur(12px)", minWidth: 200,
+          boxShadow: "0 12px 32px rgba(0,0,0,0.5)"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <button type="button" onClick={() => { setHasObs(!hasObs); }}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 4,
+                padding: "5px 10px", borderRadius: 8, border: "none", cursor: "pointer",
+                fontSize: "0.75rem", fontWeight: 600,
+                background: hasObs ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.06)",
+                color: hasObs ? "#34D399" : "#64748B"
+              }}>
+              {hasObs ? <ToggleRight size={13} /> : <ToggleLeft size={13} />}
+              {hasObs ? "Ativada" : "Desativada"}
+            </button>
+          </div>
+          {hasObs && (
+            <input value={obsLabel} onChange={(e) => setObsLabel(e.target.value)}
+              placeholder="Texto da observação"
+              className="input-dark" style={{ padding: "8px 12px", fontSize: "0.82rem", marginBottom: 8 }} />
+          )}
+          <div style={{ display: "flex", gap: 6 }}>
+            <button onClick={handleSave} className="btn-primary"
+              style={{ padding: "6px 14px", borderRadius: 8, fontSize: "0.78rem" }}>
+              Salvar
+            </button>
+            <button onClick={() => setEditing(false)} className="btn-ghost"
+              style={{ padding: "6px 12px", borderRadius: 8, fontSize: "0.78rem" }}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ═══════════════════════════════════════════════
    ABA FUNCIONÁRIOS
-═══════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════ */
 function AbaFuncionarios() {
   const [funcionarios, setFuncionarios] = useState([]);
   const [nome, setNome] = useState("");
@@ -832,7 +925,6 @@ function AbaFuncionarios() {
         </div>
       </div>
 
-      {/* Add form */}
       <form onSubmit={adicionar} style={{ display: "flex", gap: 10, marginBottom: 28 }}>
         <input required placeholder="Nome do funcionário" value={nome} onChange={(e) => setNome(e.target.value)}
           className="input-dark" style={{ flex: 1, padding: "12px 16px", fontSize: "0.93rem", borderRadius: 13 }} />
@@ -842,7 +934,6 @@ function AbaFuncionarios() {
         </button>
       </form>
 
-      {/* List */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {funcionarios.map((f, i) => {
           const link = `${window.location.origin.replace("/admin", "")}/?func=${f.slug}`;
@@ -853,7 +944,6 @@ function AbaFuncionarios() {
             <div key={f.id} className="glass-card animate-fade-up" style={{ padding: "18px 22px", animationDelay: `${i * 0.05}s` }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 150 }}>
-                  {/* Avatar */}
                   <div style={{
                     width: 42, height: 42, borderRadius: "50%", flexShrink: 0,
                     background: `${accent}1A`, border: `1.5px solid ${accent}44`,
@@ -897,6 +987,161 @@ function AbaFuncionarios() {
             <p style={{ color: "#334155", fontSize: "0.9rem" }}>Nenhum funcionário cadastrado ainda.</p>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   ABA CHAT
+   ═══════════════════════════════════════════════ */
+function AbaChat() {
+  const [funcionarios, setFuncionarios] = useState([]);
+  const [selectedSlug, setSelectedSlug] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMsg, setNewMsg] = useState("");
+  const [sending, setSending] = useState(false);
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    supabase.from("employees").select("*").order("created_at").then(({ data }) => {
+      setFuncionarios(data || []);
+      if (data && data.length > 0) setSelectedSlug(data[0].slug);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!selectedSlug) return;
+    loadMessages();
+    const interval = setInterval(loadMessages, 2000);
+    return () => clearInterval(interval);
+  }, [selectedSlug]);
+
+  const loadMessages = async () => {
+    if (!selectedSlug) return;
+    const { data } = await supabase
+      .from("chat_messages")
+      .select("*")
+      .eq("employee_slug", selectedSlug)
+      .order("created_at", { ascending: true })
+      .limit(100);
+    if (data) setMessages(data);
+  };
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = async () => {
+    if (!newMsg.trim() || !selectedSlug) return;
+    setSending(true);
+    await supabase.from("chat_messages").insert({
+      employee_slug: selectedSlug,
+      sender: "seller",
+      sender_name: "Rose",
+      message: newMsg.trim(),
+    });
+    setNewMsg("");
+    setSending(false);
+    loadMessages();
+  };
+
+  return (
+    <div className="animate-fade-up">
+      <div style={{ marginBottom: 28 }}>
+        <h2 className="font-display" style={{ fontSize: "1.6rem", fontWeight: 700, color: "#F1F5F9", letterSpacing: "-0.02em", marginBottom: 4 }}>Chat com Clientes</h2>
+        <p style={{ fontSize: "0.83rem", color: "#475569" }}>Responda as mensagens dos clientes</p>
+      </div>
+
+      {/* Employee selector */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+        {funcionarios.map((f) => (
+          <button key={f.slug} onClick={() => setSelectedSlug(f.slug)}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "8px 16px", borderRadius: 100, border: "none", cursor: "pointer",
+              fontSize: "0.82rem", fontWeight: 600, transition: "all .2s",
+                background: selectedSlug === f.slug ? "linear-gradient(135deg, #6366F1, #8B5CF6)" : "rgba(255,255,255,0.05)",
+                color: selectedSlug === f.slug ? "#FFFFFF" : "#94A3B8"
+              }}>
+            <span style={{
+              width: 24, height: 24, borderRadius: "50%",
+              background: selectedSlug === f.slug ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.08)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "0.7rem", fontWeight: 700
+            }}>
+              {f.name.charAt(0).toUpperCase()}
+            </span>
+            {f.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Chat area */}
+      <div style={{
+        background: "linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))",
+        border: "1px solid rgba(255,255,255,0.07)", borderRadius: 18, overflow: "hidden"
+      }}>
+        {/* Messages */}
+        <div style={{ 
+          height: 450, overflowY: "auto", padding: "18px 22px",
+          display: "flex", flexDirection: "column", gap: 12,
+          background: "rgba(0,0,0,0.2)"
+        }}>
+          {messages.length === 0 && (
+            <div style={{ textAlign: "center", padding: "60px 0" }}>
+              <MessageCircle size={36} color="#1E293B" style={{ margin: "0 auto 12px", display: "block" }} />
+              <p style={{ color: "#334155", fontSize: "0.9rem" }}>Nenhuma mensagem ainda.</p>
+            </div>
+          )}
+          {messages.map((msg) => (
+            <div key={msg.id} style={{
+              display: "flex",
+              justifyContent: msg.sender === "seller" ? "flex-end" : "flex-start"
+            }}>
+              <div style={{
+                maxWidth: "70%", padding: "12px 16px", borderRadius: 18,
+                background: msg.sender === "seller" 
+                  ? "linear-gradient(135deg, #6366F1, #8B5CF6)" 
+                  : "rgba(255,255,255,0.06)",
+                border: msg.sender === "seller" ? "none" : "1px solid rgba(255,255,255,0.08)"
+              }}>
+                <p style={{ fontWeight: 600, fontSize: "0.72rem", marginBottom: 4, color: msg.sender === "seller" ? "rgba(255,255,255,0.7)" : "#94A3B8" }}>
+                  {msg.sender_name}
+                </p>
+                <p style={{ fontSize: "0.9rem", lineHeight: 1.5, color: msg.sender === "seller" ? "#FFFFFF" : "#E2E8F0" }}>
+                  {msg.message}
+                </p>
+                <p style={{ fontSize: "0.65rem", marginTop: 4, color: msg.sender === "seller" ? "rgba(255,255,255,0.4)" : "#475569" }}>
+                  {new Date(msg.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                </p>
+              </div>
+            </div>
+          ))}
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Input */}
+        <div style={{ 
+          padding: "16px 22px", borderTop: "1px solid rgba(255,255,255,0.06)",
+          display: "flex", gap: 10
+        }}>
+          <input
+            value={newMsg}
+            onChange={(e) => setNewMsg(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            placeholder={selectedSlug ? `Mensagem como ${funcionarios.find(f => f.slug === selectedSlug)?.name || "vendedor"}...` : "Selecione um funcionário..."}
+            className="input-dark"
+            style={{ flex: 1, padding: "13px 18px", fontSize: "0.93rem" }}
+          />
+          <button onClick={sendMessage} disabled={sending || !newMsg.trim() || !selectedSlug} className="btn-primary"
+            style={{ 
+              display: "flex", alignItems: "center", gap: 7, padding: "13px 22px", borderRadius: 13, fontSize: "0.88rem",
+              opacity: sending || !newMsg.trim() || !selectedSlug ? 0.5 : 1
+            }}>
+            <Send size={14} /> Enviar
+          </button>
+        </div>
       </div>
     </div>
   );

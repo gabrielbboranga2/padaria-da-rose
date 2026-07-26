@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { Wheat, Flame, Cookie, Plus, Minus, Phone, Clock, X, Check, ShoppingBag, AlertTriangle, Copy, Star, MapPin, Sparkles, Heart } from "lucide-react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { Wheat, Flame, Cookie, Plus, Minus, Phone, Clock, X, Check, ShoppingBag, AlertTriangle, Copy, Star, MapPin, Sparkles, Heart, Send, MessageCircle, User, LogIn } from "lucide-react";
 import { supabase } from "./lib/supabaseClient";
 
 const CATEGORIES = [
@@ -40,23 +40,40 @@ function FloatingParticles() {
   );
 }
 
+const getCustomerData = () => {
+  try {
+    return JSON.parse(localStorage.getItem("padaria_customer") || "null");
+  } catch { return null; }
+};
+
+const saveCustomerData = (data) => {
+  localStorage.setItem("padaria_customer", JSON.stringify(data));
+};
+
 export default function SiteCliente() {
   const [products, setProducts] = useState([]);
   const [activeCat, setActiveCat] = useState("paes");
   const [cart, setCart] = useState({});
+  const [cartObs, setCartObs] = useState({});
   const [ticketOpen, setTicketOpen] = useState(false);
   const [step, setStep] = useState("menu");
-  const [customer, setCustomer] = useState({ nome: "", telefone: "", retirada: "", obs: "" });
+  const [customer, setCustomer] = useState({ nome: "", telefone: "", retirada: "" });
   const [orderNumber, setOrderNumber] = useState(null);
   const [orderError, setOrderError] = useState(null);
   const [localOrder, setLocalOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [connectionOk, setConnectionOk] = useState(true);
+  const [loggedIn, setLoggedIn] = useState(false);
 
   const employeeSlug = useMemo(() => new URLSearchParams(window.location.search).get("func"), []);
 
   useEffect(() => {
+    const saved = getCustomerData();
+    if (saved) {
+      setCustomer({ nome: saved.nome || "", telefone: saved.telefone || "", retirada: "" });
+      setLoggedIn(true);
+    }
     supabase
       .from("products")
       .select("*")
@@ -75,8 +92,11 @@ export default function SiteCliente() {
     () =>
       Object.entries(cart)
         .filter(([, qty]) => qty > 0)
-        .map(([id, qty]) => ({ ...products.find((p) => p.id === id), qty })),
-    [cart, products]
+        .map(([id, qty]) => {
+          const prod = products.find((p) => p.id === id);
+          return { ...prod, qty, obs: cartObs[id] || "" };
+        }),
+    [cart, products, cartObs]
   );
 
   const total = cartItems.reduce((sum, i) => sum + Number(i.price) * i.qty, 0);
@@ -84,22 +104,41 @@ export default function SiteCliente() {
 
   const addItem = (id) => setCart((c) => ({ ...c, [id]: (c[id] || 0) + 1 }));
   const removeItem = (id) => setCart((c) => ({ ...c, [id]: Math.max(0, (c[id] || 0) - 1) }));
+  const updateObs = (id, text) => setCartObs((o) => ({ ...o, [id]: text }));
+
+  const handleLoginSave = () => {
+    if (customer.nome && customer.telefone) {
+      saveCustomerData({ nome: customer.nome, telefone: customer.telefone });
+      setLoggedIn(true);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("padaria_customer");
+    setCustomer({ nome: "", telefone: "", retirada: "" });
+    setLoggedIn(false);
+  };
 
   const submitOrder = async (e) => {
     e.preventDefault();
     setStep("enviando");
 
+    saveCustomerData({ nome: customer.nome, telefone: customer.telefone });
+
     const items = cartItems.map((i) => ({
       product_name: i.name,
       qty: i.qty,
       unit_price: i.price,
+      observation: i.obs || "",
     }));
+
+    const allNotes = cartItems.filter((i) => i.obs).map((i) => `${i.name}: ${i.obs}`).join("; ");
 
     const { data: orderResult, error } = await supabase.rpc("create_order", {
       p_customer_name: customer.nome,
       p_customer_phone: customer.telefone,
       p_pickup_time: customer.retirada,
-      p_notes: customer.obs,
+      p_notes: allNotes || null,
       p_employee_slug: employeeSlug,
       p_total: total,
       p_items: items,
@@ -134,7 +173,7 @@ export default function SiteCliente() {
     const text = `PADARIA DA ROSE - Pedido #${localOrder.id}
 ${localOrder.customer.nome} - ${localOrder.customer.telefone}
 Retirada: ${localOrder.customer.retirada}
-${localOrder.items.map((i) => `${i.qty}x ${i.name} - ${money(i.price * i.qty)}`).join("\n")}
+${localOrder.items.map((i) => `${i.qty}x ${i.name}${i.obs ? ` (${i.obs})` : ""} - ${money(i.price * i.qty)}`).join("\n")}
 TOTAL: ${money(localOrder.total)}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -197,15 +236,13 @@ TOTAL: ${money(localOrder.total)}`;
         }
       `}</style>
 
-      {/* ═══ HEADER ═══ */}
+      {/* HEADER */}
       <header style={{ 
         background: "linear-gradient(160deg, #1C0A00 0%, #3D1C0A 35%, #5C2E0E 65%, #7A3B12 100%)", 
         position: "relative", 
         overflow: "hidden" 
       }}>
         <FloatingParticles />
-        
-        {/* Decorative gradient orbs */}
         <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
           <div style={{ position: "absolute", top: "-50%", left: "-15%", width: "70%", height: "180%", background: "radial-gradient(ellipse, rgba(245,158,11,0.1) 0%, transparent 60%)" }} />
           <div style={{ position: "absolute", top: "-30%", right: "-10%", width: "55%", height: "140%", background: "radial-gradient(ellipse, rgba(239,68,68,0.06) 0%, transparent 55%)" }} />
@@ -213,7 +250,6 @@ TOTAL: ${money(localOrder.total)}`;
         </div>
 
         <div className="max-w-5xl mx-auto px-6 pt-14 pb-20 flex flex-col items-center text-center relative" style={{ zIndex: 1 }}>
-          {/* Logo */}
           <div className="mb-6 animate-fade-up" style={{ animationDelay: "0s" }}>
             <div style={{
               width: 130, height: 130,
@@ -223,27 +259,18 @@ TOTAL: ${money(localOrder.total)}`;
               position: "relative",
               animation: "glow 3s ease-in-out infinite"
             }}>
-              <img
-                src="/logo.png"
-                alt="Padaria da Rose"
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-              />
+              <img src="/logo.png" alt="Padaria da Rose" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
             </div>
           </div>
 
           <h1 className="font-display animate-fade-up" style={{
-            fontSize: "clamp(2.5rem, 7vw, 4.2rem)",
-            fontWeight: 800,
-            color: "#FFF8F0",
-            letterSpacing: "-0.03em",
-            lineHeight: 1.05,
-            animationDelay: "0.08s",
+            fontSize: "clamp(2.5rem, 7vw, 4.2rem)", fontWeight: 800, color: "#FFF8F0",
+            letterSpacing: "-0.03em", lineHeight: 1.05, animationDelay: "0.08s",
             textShadow: "0 2px 20px rgba(0,0,0,0.3)"
           }}>
             Padaria <span className="gradient-text">da Rose</span>
           </h1>
 
-          {/* Decorative divider */}
           <div className="flex items-center gap-4 my-5 animate-fade-up" style={{ animationDelay: "0.14s" }}>
             <div style={{ height: 2, width: 52, background: "linear-gradient(90deg, transparent, #F59E0B)" }} />
             <Sparkles size={18} color="#F59E0B" style={{ filter: "drop-shadow(0 0 4px rgba(245,158,11,0.5))" }} />
@@ -251,26 +278,19 @@ TOTAL: ${money(localOrder.total)}`;
           </div>
 
           <p className="animate-fade-up" style={{
-            color: "#D4B896",
-            fontSize: "1.1rem",
-            maxWidth: 420,
-            lineHeight: 1.7,
-            animationDelay: "0.18s",
-            fontWeight: 300
+            color: "#D4B896", fontSize: "1.1rem", maxWidth: 420, lineHeight: 1.7,
+            animationDelay: "0.18s", fontWeight: 300
           }}>
             Pães artesanais, bolos e doces feitos com amor.<br />
             <span style={{ color: "#A08068", fontSize: "0.95rem", fontWeight: 400 }}>Encomende direto pelo celular e retire na padaria.</span>
           </p>
 
-          {/* Info chips */}
           <div className="flex flex-wrap items-center justify-center gap-3 mt-7 animate-fade-up" style={{ animationDelay: "0.22s" }}>
             <a href="tel:+5518991914512" style={{
               display: "flex", alignItems: "center", gap: 8,
               padding: "10px 20px", borderRadius: 100,
-              background: "rgba(245,158,11,0.12)",
-              border: "1px solid rgba(245,158,11,0.3)",
-              color: "#F5D89A", fontSize: "0.88rem",
-              textDecoration: "none", transition: "all 0.25s",
+              background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)",
+              color: "#F5D89A", fontSize: "0.88rem", textDecoration: "none", transition: "all 0.25s",
               backdropFilter: "blur(8px)"
             }}>
               <Phone size={14} color="#F59E0B" /> (18) 99191-4512
@@ -278,31 +298,26 @@ TOTAL: ${money(localOrder.total)}`;
             <span style={{
               display: "flex", alignItems: "center", gap: 8,
               padding: "10px 20px", borderRadius: 100,
-              background: "rgba(239,68,68,0.1)",
-              border: "1px solid rgba(239,68,68,0.25)",
+              background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)",
               color: "#F5B8A8", fontSize: "0.88rem"
             }}>
-              <Clock size={14} color="#EF4444" /> Ter–Dom, 6h–19h
+              <Clock size={14} color="#EF4444" /> Seg–Sáb, 5h–19h | Dom, 5h–13h
             </span>
           </div>
         </div>
 
-        {/* Wave transition */}
         <div style={{
-          height: 56,
-          background: "#FFF8F0",
-          clipPath: "ellipse(62% 100% at 50% 100%)",
-          marginTop: -1
+          height: 56, background: "#FFF8F0",
+          clipPath: "ellipse(62% 100% at 50% 100%)", marginTop: -1
         }} />
       </header>
 
-      {/* ═══ OFFLINE BANNER ═══ */}
+      {/* OFFLINE BANNER */}
       {!connectionOk && (
         <div className="max-w-5xl mx-auto px-5 pt-4">
           <div className="rounded-2xl p-4 flex items-start gap-3 animate-fade-up" style={{ 
             background: "linear-gradient(135deg, #FEF3C7, #FDE68A)", 
-            border: "1px solid #F59E0B",
-            boxShadow: "0 4px 20px rgba(245,158,11,0.2)"
+            border: "1px solid #F59E0B", boxShadow: "0 4px 20px rgba(245,158,11,0.2)"
           }}>
             <AlertTriangle size={18} color="#B45309" style={{ marginTop: 1, flexShrink: 0 }} />
             <p className="text-sm" style={{ color: "#78350F" }}>
@@ -312,15 +327,12 @@ TOTAL: ${money(localOrder.total)}`;
         </div>
       )}
 
-      {/* ═══ MENU ═══ */}
+      {/* MENU */}
       {step === "menu" && (
         <main className="max-w-5xl mx-auto px-4 sm:px-6 pb-32 animate-fade-up">
-          {/* Category nav */}
           <nav className="flex gap-3 overflow-x-auto py-6 sticky top-0 z-20" style={{
-            background: "rgba(255,248,240,0.95)",
-            backdropFilter: "blur(16px)",
-            borderBottom: "1px solid rgba(245,158,11,0.12)",
-            scrollbarWidth: "none"
+            background: "rgba(255,248,240,0.95)", backdropFilter: "blur(16px)",
+            borderBottom: "1px solid rgba(245,158,11,0.12)", scrollbarWidth: "none"
           }}>
             {CATEGORIES.map((c) => {
               const Icon = c.icon;
@@ -353,18 +365,14 @@ TOTAL: ${money(localOrder.total)}`;
               {products.filter((p) => p.category === activeCat).map((p, idx) => (
                 <div key={p.id} className="card-hover rounded-2xl overflow-hidden"
                   style={{
-                    background: "#FFFFFF",
-                    border: "1.5px solid rgba(245,158,11,0.12)",
+                    background: "#FFFFFF", border: "1.5px solid rgba(245,158,11,0.12)",
                     boxShadow: "0 4px 20px rgba(120,53,15,0.07)",
                     opacity: p.available ? 1 : 0.5,
                     animation: `fadeUp 0.45s ease-out ${idx * 0.08}s both`
                   }}>
-                  {/* Top accent bar */}
                   <div style={{
                     height: 4,
-                    background: p.available
-                      ? "linear-gradient(90deg, #F59E0B, #EF4444, #F59E0B)"
-                      : "#E8E0D8"
+                    background: p.available ? "linear-gradient(90deg, #F59E0B, #EF4444, #F59E0B)" : "#E8E0D8"
                   }} />
                   <div style={{ padding: "22px 22px 20px" }}>
                     <div className="flex items-start justify-between gap-2">
@@ -381,18 +389,14 @@ TOTAL: ${money(localOrder.total)}`;
                           background: "linear-gradient(135deg, rgba(239,68,68,0.1), rgba(236,72,153,0.08))", color: "#DC2626",
                           border: "1px solid rgba(239,68,68,0.2)", flexShrink: 0,
                           fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600
-                        }}>
-                          Esgotado
-                        </span>
+                        }}>Esgotado</span>
                       )}
                     </div>
 
                     <div className="flex items-center justify-between mt-5 pt-4" style={{ borderTop: "1.5px dashed rgba(245,158,11,0.15)" }}>
                       <div>
                         <span className="font-mono-ticket" style={{ 
-                          fontSize: "1.3rem", 
-                          fontWeight: 700, 
-                          color: "#DC2626",
+                          fontSize: "1.3rem", fontWeight: 700, color: "#DC2626",
                           animation: "priceGlow 3s ease-in-out infinite"
                         }}>
                           {money(p.price)}
@@ -452,8 +456,7 @@ TOTAL: ${money(localOrder.total)}`;
                     width: 80, height: 80, borderRadius: "50%", 
                     background: "linear-gradient(135deg, rgba(245,158,11,0.1), rgba(239,68,68,0.08))", 
                     display: "flex", alignItems: "center", justifyContent: "center", 
-                    margin: "0 auto 18px",
-                    boxShadow: "0 0 30px rgba(245,158,11,0.15)"
+                    margin: "0 auto 18px", boxShadow: "0 0 30px rgba(245,158,11,0.15)"
                   }}>
                     <Cookie size={34} color="#F59E0B" />
                   </div>
@@ -466,7 +469,7 @@ TOTAL: ${money(localOrder.total)}`;
         </main>
       )}
 
-      {/* ═══ DADOS ═══ */}
+      {/* DADOS */}
       {step === "dados" && (
         <main className="max-w-lg mx-auto px-5 py-12 animate-fade-up">
           <button onClick={() => setStep("menu")}
@@ -482,13 +485,11 @@ TOTAL: ${money(localOrder.total)}`;
           </button>
 
           <div style={{
-            background: "#FFFFFF",
-            borderRadius: 24,
+            background: "#FFFFFF", borderRadius: 24,
             border: "1.5px solid rgba(245,158,11,0.15)",
             boxShadow: "0 12px 48px rgba(120,53,15,0.1), 0 0 0 1px rgba(245,158,11,0.05)",
             overflow: "hidden"
           }}>
-            {/* Form header with gradient */}
             <div style={{ 
               padding: "32px 32px 0",
               background: "linear-gradient(135deg, rgba(245,158,11,0.05), rgba(239,68,68,0.03))",
@@ -499,6 +500,25 @@ TOTAL: ${money(localOrder.total)}`;
             </div>
 
             <form onSubmit={submitOrder} style={{ padding: "28px 32px 32px" }}>
+              {/* Login info */}
+              {loggedIn && (
+                <div style={{ 
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "10px 14px", borderRadius: 12, marginBottom: 20,
+                  background: "linear-gradient(135deg, rgba(16,185,129,0.08), rgba(5,150,105,0.05))",
+                  border: "1px solid rgba(16,185,129,0.2)"
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <User size={14} color="#10B981" />
+                    <span style={{ fontSize: "0.82rem", color: "#065F46", fontWeight: 500 }}>Dados preenchidos automaticamente</span>
+                  </div>
+                  <button type="button" onClick={handleLogout}
+                    style={{ fontSize: "0.75rem", color: "#DC2626", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>
+                    Trocar
+                  </button>
+                </div>
+              )}
+
               {[
                 { label: "Nome completo", key: "nome", placeholder: "Seu nome completo", type: "text", icon: "👤" },
                 { label: "Telefone", key: "telefone", placeholder: "(18) 9XXXX-XXXX", type: "tel", icon: "📱" },
@@ -524,23 +544,46 @@ TOTAL: ${money(localOrder.total)}`;
                 </div>
               ))}
 
-              <div style={{ marginBottom: 26 }}>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#78350F", marginBottom: 8 }}>
-                  💬 Observações <span style={{ color: "#9A8A7A", fontWeight: 400, textTransform: "none" }}>(opcional)</span>
-                </label>
-                <textarea
-                  value={customer.obs}
-                  onChange={(e) => setCustomer({ ...customer, obs: e.target.value })}
-                  rows={3}
-                  placeholder="Ex: pão de queijo sem sal, sem glúten…"
+              {!loggedIn && customer.nome && customer.telefone && (
+                <button type="button" onClick={handleLoginSave}
                   style={{
-                    width: "100%", padding: "14px 18px", borderRadius: 14,
-                    border: "1.5px solid rgba(245,158,11,0.2)",
-                    background: "#FFFBF5", color: "#1C0A00", fontSize: "0.95rem",
-                    resize: "none", transition: "all 0.25s", boxSizing: "border-box"
-                  }}
-                />
-              </div>
+                    width: "100%", padding: "12px", borderRadius: 12, marginBottom: 20,
+                    background: "linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.05))",
+                    border: "1px solid rgba(99,102,241,0.2)", color: "#4338CA",
+                    fontSize: "0.85rem", fontWeight: 600, cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8
+                  }}>
+                  <LogIn size={14} /> Salvar meus dados para próxima compra
+                </button>
+              )}
+
+              {/* Per-product observations */}
+              {cartItems.some((i) => i.has_obs) && (
+                <div style={{ marginBottom: 24 }}>
+                  <p style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#78350F", marginBottom: 12 }}>
+                    💬 Observações por produto
+                  </p>
+                  {cartItems.filter((i) => i.has_obs).map((i) => (
+                    <div key={i.id} style={{ marginBottom: 12 }}>
+                      <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#5C3D2E", marginBottom: 6 }}>
+                        {i.qty}x {i.name} — <span style={{ color: "#9A8A7A", fontWeight: 400 }}>{i.obs_label || "Observação"}</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={cartObs[i.id] || ""}
+                        onChange={(e) => updateObs(i.id, e.target.value)}
+                        placeholder={i.obs_label || "Ex: sem sal, bem passado..."}
+                        style={{
+                          width: "100%", padding: "12px 16px", borderRadius: 12,
+                          border: "1.5px solid rgba(245,158,11,0.2)",
+                          background: "#FFFBF5", color: "#1C0A00", fontSize: "0.9rem",
+                          transition: "all 0.25s", boxSizing: "border-box"
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Order summary */}
               <div style={{
@@ -553,12 +596,19 @@ TOTAL: ${money(localOrder.total)}`;
                   <ShoppingBag size={14} color="#F59E0B" /> Resumo do pedido
                 </p>
                 {cartItems.map((i) => (
-                  <div key={i.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem", color: "#78350F", padding: "5px 0" }}>
-                    <span>{i.qty}x {i.name}</span>
-                    <span className="font-mono-ticket" style={{ fontWeight: 600 }}>{money(i.price * i.qty)}</span>
+                  <div key={i.id} style={{ marginBottom: 6 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem", color: "#78350F", padding: "3px 0" }}>
+                      <span>{i.qty}x {i.name}</span>
+                      <span className="font-mono-ticket" style={{ fontWeight: 600 }}>{money(i.price * i.qty)}</span>
+                    </div>
+                    {i.obs && (
+                      <p style={{ fontSize: "0.78rem", color: "#9A8A7A", fontStyle: "italic", paddingLeft: 8 }}>
+                        → {i.obs}
+                      </p>
+                    )}
                   </div>
                 ))}
-                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "2px dashed rgba(245,158,11,0.3)", display: "flex", justifyContent: "spaceBetween", fontWeight: 800, fontSize: "1.1rem", color: "#1C0A00" }}>
+                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "2px dashed rgba(245,158,11,0.3)", display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: "1.1rem", color: "#1C0A00" }}>
                   <span>TOTAL</span>
                   <span className="font-mono-ticket" style={{ color: "#DC2626" }}>{money(total)}</span>
                 </div>
@@ -571,8 +621,7 @@ TOTAL: ${money(localOrder.total)}`;
                   color: "#FFFFFF", fontWeight: 800, fontSize: "1.05rem",
                   border: "none", cursor: "pointer",
                   boxShadow: "0 8px 28px rgba(245,158,11,0.35)",
-                  opacity: itemCount === 0 ? 0.4 : 1,
-                  letterSpacing: "0.02em"
+                  opacity: itemCount === 0 ? 0.4 : 1, letterSpacing: "0.02em"
                 }}>
                 {step === "enviando" ? "Enviando..." : "✨ Confirmar encomenda ✨"}
               </button>
@@ -581,7 +630,7 @@ TOTAL: ${money(localOrder.total)}`;
         </main>
       )}
 
-      {/* ═══ ENVIANDO ═══ */}
+      {/* ENVIANDO */}
       {step === "enviando" && (
         <main className="max-w-md mx-auto px-6 py-24 text-center animate-fade-in">
           <Wheat size={42} color="#F59E0B" style={{ margin: "0 auto 18px", filter: "drop-shadow(0 0 8px rgba(245,158,11,0.4))" }} className="animate-pulse-slow" />
@@ -589,7 +638,7 @@ TOTAL: ${money(localOrder.total)}`;
         </main>
       )}
 
-      {/* ═══ ENVIADO ═══ */}
+      {/* ENVIADO */}
       {step === "enviado" && (
         <main className="max-w-lg mx-auto px-5 py-20 text-center animate-fade-up">
           <div className="animate-pop-in" style={{
@@ -611,13 +660,15 @@ TOTAL: ${money(localOrder.total)}`;
               padding: "14px 26px", borderRadius: 16,
               background: "linear-gradient(135deg, #FEF3C7, #FDE68A)", 
               border: "1.5px solid rgba(245,158,11,0.3)",
-              color: "#78350F", textDecoration: "none", fontSize: "0.92rem", transition: "all 0.25s",
-              fontWeight: 600
+              color: "#78350F", textDecoration: "none", fontSize: "0.92rem", transition: "all 0.25s", fontWeight: 600
             }}>
               <Phone size={16} color="#F59E0B" />
               Precisa falar? <strong>(18) 99191-4512</strong>
             </a>
-            <button onClick={() => { setCart({}); setCustomer({ nome: "", telefone: "", retirada: "", obs: "" }); setStep("menu"); }}
+            {employeeSlug && (
+              <ChatCliente orderNumber={orderNumber} employeeSlug={employeeSlug} customerName={customer.nome} />
+            )}
+            <button onClick={() => { setCart({}); setCartObs({}); setCustomer({ nome: "", telefone: "", retirada: "" }); setStep("menu"); }}
               className="btn-press"
               style={{
                 padding: "14px 36px", borderRadius: 100,
@@ -631,7 +682,7 @@ TOTAL: ${money(localOrder.total)}`;
         </main>
       )}
 
-      {/* ═══ FALLBACK ═══ */}
+      {/* FALLBACK */}
       {step === "fallback" && localOrder && (
         <main className="max-w-md mx-auto px-5 py-10 animate-fade-up">
           <div style={{ 
@@ -659,12 +710,14 @@ TOTAL: ${money(localOrder.total)}`;
             <p style={{ color: "#1C0A00", fontWeight: 600 }}>{localOrder.customer.nome}</p>
             <p style={{ color: "#5C3D2E" }}>{localOrder.customer.telefone}</p>
             <p style={{ color: "#5C3D2E" }}>Retirada: {localOrder.customer.retirada}</p>
-            {localOrder.customer.obs && <p style={{ marginTop: 4, fontSize: "0.82rem", color: "#7A6B5D" }}>Obs: {localOrder.customer.obs}</p>}
             <BreadDivider />
             {localOrder.items.map((i, idx) => (
-              <div key={idx} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", color: "#1C0A00" }}>
-                <span>{i.qty}x {i.name}</span>
-                <span>{money(i.price * i.qty)}</span>
+              <div key={idx} style={{ padding: "5px 0", color: "#1C0A00" }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span>{i.qty}x {i.name}</span>
+                  <span>{money(i.price * i.qty)}</span>
+                </div>
+                {i.obs && <p style={{ fontSize: "0.78rem", color: "#9A8A7A", fontStyle: "italic", paddingLeft: 8 }}>→ {i.obs}</p>}
               </div>
             ))}
             <BreadDivider />
@@ -707,7 +760,7 @@ TOTAL: ${money(localOrder.total)}`;
         </main>
       )}
 
-      {/* ═══ FLOATING CART BUTTON ═══ */}
+      {/* FLOATING CART BUTTON */}
       {step === "menu" && itemCount > 0 && (
         <button onClick={() => setTicketOpen(true)} className="animate-slide-up btn-press"
           style={{
@@ -734,7 +787,7 @@ TOTAL: ${money(localOrder.total)}`;
         </button>
       )}
 
-      {/* ═══ CART MODAL ═══ */}
+      {/* CART MODAL */}
       {ticketOpen && (
         <div className="animate-fade-in" style={{
           position: "fixed", inset: 0, zIndex: 40,
@@ -747,13 +800,11 @@ TOTAL: ${money(localOrder.total)}`;
             background: "#FFFFFF",
             boxShadow: "0 -16px 56px rgba(0,0,0,0.25)"
           }}>
-            {/* Handle */}
             <div style={{ display: "flex", justifyContent: "center", paddingTop: 14, paddingBottom: 4 }}>
               <div style={{ width: 44, height: 5, borderRadius: 3, background: "linear-gradient(90deg, #F5D89A, #F59E0B)" }} />
             </div>
 
             <div style={{ padding: "14px 26px 30px" }}>
-              {/* Header */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   <div style={{ 
@@ -781,7 +832,6 @@ TOTAL: ${money(localOrder.total)}`;
 
               <div style={{ height: 1.5, background: "repeating-linear-gradient(90deg, rgba(245,158,11,0.35) 0, rgba(245,158,11,0.35) 6px, transparent 6px, transparent 12px)" }} />
 
-              {/* Items */}
               <div style={{ padding: "18px 0", display: "flex", flexDirection: "column", gap: 8 }}>
                 {cartItems.length === 0 && (
                   <div style={{ textAlign: "center", padding: "36px 0" }}>
@@ -790,29 +840,46 @@ TOTAL: ${money(localOrder.total)}`;
                   </div>
                 )}
                 {cartItems.map((i) => (
-                  <div key={i.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                        <button onClick={() => removeItem(i.id)} className="btn-press"
-                          style={{ width: 28, height: 28, borderRadius: "50%", background: "#FEF3C7", border: "1.5px solid rgba(245,158,11,0.25)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <Minus size={11} color="#92400E" />
-                        </button>
-                        <span className="font-mono-ticket" style={{ fontWeight: 700, fontSize: "1rem", width: 24, textAlign: "center", color: "#1C0A00" }}>{i.qty}</span>
-                        <button onClick={() => addItem(i.id)} className="btn-press"
-                          style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg, #F59E0B, #F97316)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <Plus size={11} color="#FFFFFF" />
-                        </button>
+                  <div key={i.id} style={{ padding: "10px 0" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                          <button onClick={() => removeItem(i.id)} className="btn-press"
+                            style={{ width: 28, height: 28, borderRadius: "50%", background: "#FEF3C7", border: "1.5px solid rgba(245,158,11,0.25)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Minus size={11} color="#92400E" />
+                          </button>
+                          <span className="font-mono-ticket" style={{ fontWeight: 700, fontSize: "1rem", width: 24, textAlign: "center", color: "#1C0A00" }}>{i.qty}</span>
+                          <button onClick={() => addItem(i.id)} className="btn-press"
+                            style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg, #F59E0B, #F97316)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <Plus size={11} color="#FFFFFF" />
+                          </button>
+                        </div>
+                        <span style={{ fontWeight: 600, color: "#1C0A00", fontSize: "0.92rem" }}>{i.name}</span>
                       </div>
-                      <span style={{ fontWeight: 600, color: "#1C0A00", fontSize: "0.92rem" }}>{i.name}</span>
+                      <span className="font-mono-ticket" style={{ fontWeight: 700, color: "#DC2626", fontSize: "0.92rem" }}>{money(i.price * i.qty)}</span>
                     </div>
-                    <span className="font-mono-ticket" style={{ fontWeight: 700, color: "#DC2626", fontSize: "0.92rem" }}>{money(i.price * i.qty)}</span>
+                    {i.has_obs && (cart[i.id] || 0) > 0 && (
+                      <div style={{ marginTop: 8, paddingLeft: 47 }}>
+                        <input
+                          type="text"
+                          value={cartObs[i.id] || ""}
+                          onChange={(e) => updateObs(i.id, e.target.value)}
+                          placeholder={i.obs_label || "Observação..."}
+                          style={{
+                            width: "100%", padding: "10px 14px", borderRadius: 10,
+                            border: "1.5px solid rgba(245,158,11,0.2)",
+                            background: "#FFFBF5", color: "#1C0A00", fontSize: "0.85rem",
+                            transition: "all 0.25s", boxSizing: "border-box"
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
 
               <div style={{ height: 1.5, background: "repeating-linear-gradient(90deg, rgba(245,158,11,0.35) 0, rgba(245,158,11,0.35) 6px, transparent 6px, transparent 12px)" }} />
 
-              {/* Total */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 0", fontWeight: 800, fontSize: "1.15rem" }}>
                 <span style={{ color: "#1C0A00" }}>TOTAL</span>
                 <span className="font-mono-ticket" style={{ color: "#DC2626", fontSize: "1.2rem" }}>{money(total)}</span>
@@ -830,6 +897,167 @@ TOTAL: ${money(localOrder.total)}`;
                 ✨ Continuar para os dados →
               </button>
             </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   CHAT CLIENTE ↔ VENDEDOR
+   ═══════════════════════════════════════════════ */
+function ChatCliente({ orderNumber, employeeSlug, customerName }) {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [newMsg, setNewMsg] = useState("");
+  const [sending, setSending] = useState(false);
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    loadMessages();
+    const interval = setInterval(loadMessages, 3000);
+    return () => clearInterval(interval);
+  }, [open, employeeSlug]);
+
+  const loadMessages = async () => {
+    const { data } = await supabase
+      .from("chat_messages")
+      .select("*")
+      .eq("employee_slug", employeeSlug)
+      .order("created_at", { ascending: true })
+      .limit(50);
+    if (data) setMessages(data);
+  };
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = async () => {
+    if (!newMsg.trim()) return;
+    setSending(true);
+    await supabase.from("chat_messages").insert({
+      order_id: orderNumber,
+      employee_slug: employeeSlug,
+      sender: "customer",
+      sender_name: customerName || "Cliente",
+      message: newMsg.trim(),
+    });
+    setNewMsg("");
+    setSending(false);
+    loadMessages();
+  };
+
+  return (
+    <div style={{ width: "100%" }}>
+      <button onClick={() => setOpen(!open)}
+        className="btn-press"
+        style={{
+          width: "100%", padding: "14px 26px", borderRadius: 16,
+          background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
+          color: "#FFFFFF", fontWeight: 700, fontSize: "0.92rem",
+          border: "none", cursor: "pointer",
+          boxShadow: "0 8px 24px rgba(99,102,241,0.35)",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 10
+        }}>
+        <MessageCircle size={18} />
+        {open ? "Fechar chat" : "Conversar com o vendedor"}
+      </button>
+
+      {open && (
+        <div className="animate-slide-up" style={{
+          marginTop: 14, borderRadius: 20, overflow: "hidden",
+          border: "1.5px solid rgba(99,102,241,0.2)",
+          boxShadow: "0 8px 32px rgba(99,102,241,0.15)",
+          background: "#FFFFFF"
+        }}>
+          {/* Chat header */}
+          <div style={{
+            padding: "14px 18px",
+            background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
+            color: "#FFFFFF", fontWeight: 700, fontSize: "0.92rem",
+            display: "flex", alignItems: "center", gap: 10
+          }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: "50%",
+              background: "rgba(255,255,255,0.2)",
+              display: "flex", alignItems: "center", justifyContent: "center"
+            }}>
+              <User size={16} />
+            </div>
+            <div>
+              <p style={{ fontWeight: 700 }}>{employeeSlug}</p>
+              <p style={{ fontSize: "0.72rem", opacity: 0.8 }}>Vendedor online</p>
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div style={{ 
+            maxHeight: 300, overflowY: "auto", padding: "14px 16px",
+            display: "flex", flexDirection: "column", gap: 10,
+            background: "#F8F7FF"
+          }}>
+            {messages.length === 0 && (
+              <p style={{ textAlign: "center", color: "#9A8A7A", fontSize: "0.85rem", padding: 20 }}>
+                Envie uma mensagem para o vendedor...
+              </p>
+            )}
+            {messages.map((msg) => (
+              <div key={msg.id} style={{
+                display: "flex",
+                justifyContent: msg.sender === "customer" ? "flex-end" : "flex-start"
+              }}>
+                <div style={{
+                  maxWidth: "80%", padding: "10px 14px", borderRadius: 16,
+                  background: msg.sender === "customer" 
+                    ? "linear-gradient(135deg, #6366F1, #8B5CF6)" 
+                    : "#FFFFFF",
+                  color: msg.sender === "customer" ? "#FFFFFF" : "#1C0A00",
+                  border: msg.sender === "customer" ? "none" : "1px solid rgba(0,0,0,0.08)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)"
+                }}>
+                  <p style={{ fontWeight: 600, fontSize: "0.78rem", marginBottom: 4, opacity: 0.7 }}>
+                    {msg.sender_name}
+                  </p>
+                  <p style={{ fontSize: "0.9rem", lineHeight: 1.5 }}>{msg.message}</p>
+                  <p style={{ fontSize: "0.68rem", marginTop: 4, opacity: 0.5 }}>
+                    {new Date(msg.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                </div>
+              </div>
+            ))}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Input */}
+          <div style={{ 
+            padding: "12px 16px", borderTop: "1px solid rgba(0,0,0,0.06)",
+            display: "flex", gap: 8, background: "#FFFFFF"
+          }}>
+            <input
+              value={newMsg}
+              onChange={(e) => setNewMsg(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              placeholder="Digite sua mensagem..."
+              style={{
+                flex: 1, padding: "12px 16px", borderRadius: 12,
+                border: "1.5px solid rgba(99,102,241,0.2)",
+                background: "#F8F7FF", color: "#1C0A00", fontSize: "0.9rem",
+                outline: "none"
+              }}
+            />
+            <button onClick={sendMessage} disabled={sending || !newMsg.trim()}
+              style={{
+                width: 44, height: 44, borderRadius: 12,
+                background: "linear-gradient(135deg, #6366F1, #8B5CF6)",
+                border: "none", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                opacity: sending || !newMsg.trim() ? 0.5 : 1
+              }}>
+              <Send size={16} color="#FFFFFF" />
+            </button>
           </div>
         </div>
       )}
