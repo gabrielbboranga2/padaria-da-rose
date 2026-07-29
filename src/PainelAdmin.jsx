@@ -1014,7 +1014,7 @@ function AbaChat() {
   useEffect(() => {
     supabase.from("employees").select("*").order("created_at").then(({ data }) => {
       setFuncionarios(data || []);
-      if (data && data.length > 0) setSelectedSlug(data[0].slug);
+      setSelectedSlug("geral");
     });
   }, []);
 
@@ -1057,12 +1057,25 @@ function AbaChat() {
   return (
     <div className="animate-fade-up">
       <div style={{ marginBottom: 28 }}>
-        <h2 className="font-display" style={{ fontSize: "1.6rem", fontWeight: 700, color: "#F1F5F9", letterSpacing: "-0.02em", marginBottom: 4 }}>Chat com Clientes</h2>
+        <h2 className="font-display" style={{ fontSize: "1.6rem", fontWeight: 700, color: "#F1F5F9", letterSpacing: "-0.02em", marginBottom: 4 }}>
+          {selectedSlug === "geral" ? "Chat Geral" : `Chat — ${funcionarios.find(f => f.slug === selectedSlug)?.name || ""}`}
+        </h2>
         <p style={{ fontSize: "0.83rem", color: "#475569" }}>Responda as mensagens dos clientes</p>
       </div>
 
       {/* Employee selector */}
       <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+        <button onClick={() => setSelectedSlug("geral")}
+          style={{
+            display: "flex", alignItems: "center", gap: 6,
+            padding: "8px 16px", borderRadius: 100, border: "none", cursor: "pointer",
+            fontSize: "0.82rem", fontWeight: 600, transition: "all .2s",
+              background: selectedSlug === "geral" ? "linear-gradient(135deg, #25D366, #128C7E)" : "rgba(255,255,255,0.05)",
+              color: selectedSlug === "geral" ? "#FFFFFF" : "#94A3B8"
+            }}>
+          <MessageCircle size={13} />
+          Geral
+        </button>
         {funcionarios.map((f) => (
           <button key={f.slug} onClick={() => setSelectedSlug(f.slug)}
             style={{

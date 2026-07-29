@@ -1423,6 +1423,22 @@ function ChatGeral({ onClose }) {
     if (saved?.nome) setCustomerName(saved.nome);
   }, []);
 
+  const loadMessages = async () => {
+    const { data } = await supabase
+      .from("chat_messages")
+      .select("*")
+      .eq("employee_slug", "geral")
+      .order("created_at", { ascending: true })
+      .limit(100);
+    if (data) setMessages(data);
+  };
+
+  useEffect(() => {
+    loadMessages();
+    const interval = setInterval(loadMessages, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -1439,6 +1455,7 @@ function ChatGeral({ onClose }) {
     });
     setNewMsg("");
     setSending(false);
+    loadMessages();
   };
 
   return (
