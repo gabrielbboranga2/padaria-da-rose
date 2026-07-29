@@ -1416,18 +1416,23 @@ function ChatGeral({ onClose }) {
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
   const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const chatEndRef = useRef(null);
 
   useEffect(() => {
     const saved = getCustomerData();
     if (saved?.nome) setCustomerName(saved.nome);
+    if (saved?.telefone) setCustomerPhone(saved.telefone);
   }, []);
 
+  const chatSlug = customerPhone || null;
+
   const loadMessages = async () => {
+    if (!chatSlug) return;
     const { data, error } = await supabase
       .from("chat_messages")
       .select("*")
-      .eq("employee_slug", "geral")
+      .eq("employee_slug", chatSlug)
       .order("created_at", { ascending: true })
       .limit(100);
     if (error) console.error("Erro ao carregar mensagens:", error);
@@ -1435,21 +1440,22 @@ function ChatGeral({ onClose }) {
   };
 
   useEffect(() => {
+    if (!chatSlug) return;
     loadMessages();
     const interval = setInterval(loadMessages, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [chatSlug]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!newMsg.trim() || !customerName.trim()) return;
+    if (!newMsg.trim() || !chatSlug || !customerName.trim()) return;
     setSending(true);
     const { error } = await supabase.from("chat_messages").insert({
       order_id: null,
-      employee_slug: "geral",
+      employee_slug: chatSlug,
       sender: "customer",
       sender_name: customerName,
       message: newMsg.trim(),
@@ -1457,7 +1463,7 @@ function ChatGeral({ onClose }) {
     if (error) console.error("Erro ao enviar mensagem:", error);
     setNewMsg("");
     setSending(false);
-    loadMessages();
+    await loadMessages();
   };
 
   return (
@@ -1498,21 +1504,40 @@ function ChatGeral({ onClose }) {
         </button>
       </div>
 
-      {/* Name input if not logged in */}
-      {!customerName && (
+      {/* Name + phone input if not logged in */}
+      {(!customerName || !customerPhone) && (
         <div style={{ padding: "14px 16px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
-          <input
-            type="text"
-            placeholder="Seu nome para o chat..."
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            style={{
-              width: "100%", padding: "10px 14px", borderRadius: 10,
-              border: "1.5px solid rgba(37,211,102,0.2)",
-              background: "#F0FFF4", color: "#1C0A00", fontSize: "0.88rem",
-              outline: "none", boxSizing: "border-box"
-            }}
-          />
+          {!customerName && (
+            <input
+              type="text"
+              placeholder="Seu nome..."
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              style={{
+                width: "100%", padding: "10px 14px", borderRadius: 10,
+                border: "1.5px solid rgba(37,211,102,0.2)",
+                background: "#F0FFF4", color: "#1C0A00", fontSize: "0.88rem",
+                outline: "none", boxSizing: "border-box", marginBottom: 8
+              }}
+            />
+          )}
+          {customerName && !customerPhone && (
+            <input
+              type="tel"
+              placeholder="Seu telefone..."
+              value={customerPhone}
+              onChange={(e) => setCustomerPhone(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && customerPhone.trim()) {
+                saveCustomerData({ nome: customerName, telefone: customerPhone });
+              }}}
+              style={{
+                width: "100%", padding: "10px 14px", borderRadius: 10,
+                border: "1.5px solid rgba(37,211,102,0.2)",
+                background: "#F0FFF4", color: "#1C0A00", fontSize: "0.88rem",
+                outline: "none", boxSizing: "border-box"
+              }}
+            />
+          )}
         </div>
       )}
 
@@ -1571,7 +1596,7 @@ function ChatGeral({ onClose }) {
             outline: "none"
           }}
         />
-        <button onClick={sendMessage} disabled={sending || !newMsg.trim() || !customerName.trim()}
+        <button onClick={sendMessage} disabled={sending || !newMsg.trim() || !customerName.trim() || !customerPhone.trim()}
           style={{
             width: 44, height: 44, borderRadius: 12,
             background: "linear-gradient(135deg, #25D366, #128C7E)",

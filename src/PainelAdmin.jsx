@@ -237,7 +237,7 @@ export default function PainelAdmin() {
         {tab === "pedidos"      && <AbaPedidos />}
         {tab === "produtos"     && <AbaProdutos />}
         {tab === "funcionarios" && <AbaFuncionarios />}
-        {tab === "chat"         && <AbaChat />}
+        {tab === "chat"         && <AbaChat session={session} />}
       </main>
     </div>
   );
@@ -1003,34 +1003,65 @@ function AbaFuncionarios() {
 /* ═══════════════════════════════════════════════
    ABA CHAT
    ═══════════════════════════════════════════════ */
-function AbaChat() {
-  const [funcionarios, setFuncionarios] = useState([]);
-  const [selectedSlug, setSelectedSlug] = useState(null);
+function AbaChat({ session }) {
+  const [customerChats, setCustomerChats] = useState([]);
+  const [selectedPhone, setSelectedPhone] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
   const chatEndRef = useRef(null);
 
-  useEffect(() => {
-    supabase.from("employees").select("*").order("created_at").then(({ data }) => {
-      setFuncionarios(data || []);
-      setSelectedSlug("geral");
+  const employeeName = session?.user?.user_metadata?.full_name
+    || session?.user?.user_metadata?.name
+    || session?.user?.email?.split("@")[0]
+    || "Atendente";
+
+  const loadCustomerChats = async () => {
+    const { data: allMsgs } = await supabase
+      .from("chat_messages")
+      .select("employee_slug, sender_name, message, created_at")
+      .order("created_at", { ascending: false });
+
+    if (!allMsgs) return;
+
+    const chatMap = {};
+    allMsgs.forEach((msg) => {
+      const slug = msg.employee_slug;
+      if (!chatMap[slug]) {
+        chatMap[slug] = {
+          phone: slug,
+          customerName: msg.sender === "customer" ? msg.sender_name : "",
+          lastMessage: msg.message,
+          lastTime: msg.created_at,
+        };
+      }
+      if (msg.sender === "customer" && !chatMap[slug].customerName) {
+        chatMap[slug].customerName = msg.sender_name;
+      }
     });
+
+    setCustomerChats(Object.values(chatMap));
+  };
+
+  useEffect(() => {
+    loadCustomerChats();
+    const interval = setInterval(loadCustomerChats, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    if (!selectedSlug) return;
+    if (!selectedPhone) return;
     loadMessages();
     const interval = setInterval(loadMessages, 2000);
     return () => clearInterval(interval);
-  }, [selectedSlug]);
+  }, [selectedPhone]);
 
   const loadMessages = async () => {
-    if (!selectedSlug) return;
+    if (!selectedPhone) return;
     const { data, error } = await supabase
       .from("chat_messages")
       .select("*")
-      .eq("employee_slug", selectedSlug)
+      .eq("employee_slug", selectedPhone)
       .order("created_at", { ascending: true })
       .limit(100);
     if (error) console.error("Erro ao carregar mensagens:", error);
@@ -1042,128 +1073,141 @@ function AbaChat() {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!newMsg.trim() || !selectedSlug) return;
+    if (!newMsg.trim() || !selectedPhone) return;
     setSending(true);
     const { error } = await supabase.from("chat_messages").insert({
-      employee_slug: selectedSlug,
+      employee_slug: selectedPhone,
       sender: "seller",
-      sender_name: "Rose",
+      sender_name: employeeName,
       message: newMsg.trim(),
     });
     if (error) console.error("Erro ao enviar mensagem:", error);
     setNewMsg("");
     setSending(false);
-    loadMessages();
+    await loadMessages();
+    await loadCustomerChats();
+  };
+
+  const formatTime = (ts) => {
+    const d = new Date(ts);
+    return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   };
 
   return (
     <div className="animate-fade-up">
       <div style={{ marginBottom: 28 }}>
         <h2 className="font-display" style={{ fontSize: "1.6rem", fontWeight: 700, color: "#F1F5F9", letterSpacing: "-0.02em", marginBottom: 4 }}>
-          {selectedSlug === "geral" ? "Chat Geral" : `Chat — ${funcionarios.find(f => f.slug === selectedSlug)?.name || ""}`}
+          Chat com Clientes
         </h2>
-        <p style={{ fontSize: "0.83rem", color: "#475569" }}>Responda as mensagens dos clientes</p>
+        <p style={{ fontSize: "0.83rem", color: "#475569" }}>Conversas individuais — respondendo como <strong style={{ color: "#E8C36A" }}>{employeeName}</strong></p>
       </div>
 
-      {/* Employee selector */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-        <button onClick={() => setSelectedSlug("geral")}
-          style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "8px 16px", borderRadius: 100, border: "none", cursor: "pointer",
-            fontSize: "0.82rem", fontWeight: 600, transition: "all .2s",
-              background: selectedSlug === "geral" ? "linear-gradient(135deg, #25D366, #128C7E)" : "rgba(255,255,255,0.05)",
-              color: selectedSlug === "geral" ? "#FFFFFF" : "#94A3B8"
-            }}>
-          <MessageCircle size={13} />
-          Geral
-        </button>
-        {funcionarios.map((f) => (
-          <button key={f.slug} onClick={() => setSelectedSlug(f.slug)}
-            style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "8px 16px", borderRadius: 100, border: "none", cursor: "pointer",
-              fontSize: "0.82rem", fontWeight: 600, transition: "all .2s",
-                background: selectedSlug === f.slug ? "linear-gradient(135deg, #6366F1, #8B5CF6)" : "rgba(255,255,255,0.05)",
-                color: selectedSlug === f.slug ? "#FFFFFF" : "#94A3B8"
-              }}>
-            <span style={{
-              width: 24, height: 24, borderRadius: "50%",
-              background: selectedSlug === f.slug ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.08)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "0.7rem", fontWeight: 700
-            }}>
-              {f.name.charAt(0).toUpperCase()}
-            </span>
-            {f.name}
-          </button>
-        ))}
-      </div>
-
-      {/* Chat area */}
-      <div style={{
-        background: "linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))",
-        border: "1px solid rgba(255,255,255,0.07)", borderRadius: 18, overflow: "hidden"
-      }}>
-        {/* Messages */}
-        <div style={{ 
-          height: 450, overflowY: "auto", padding: "18px 22px",
-          display: "flex", flexDirection: "column", gap: 12,
-          background: "rgba(0,0,0,0.2)"
-        }}>
-          {messages.length === 0 && (
-            <div style={{ textAlign: "center", padding: "60px 0" }}>
-              <MessageCircle size={36} color="#1E293B" style={{ margin: "0 auto 12px", display: "block" }} />
-              <p style={{ color: "#334155", fontSize: "0.9rem" }}>Nenhuma mensagem ainda.</p>
-            </div>
-          )}
-          {messages.map((msg) => (
-            <div key={msg.id} style={{
-              display: "flex",
-              justifyContent: msg.sender === "seller" ? "flex-end" : "flex-start"
-            }}>
-              <div style={{
-                maxWidth: "70%", padding: "12px 16px", borderRadius: 18,
-                background: msg.sender === "seller" 
-                  ? "linear-gradient(135deg, #6366F1, #8B5CF6)" 
-                  : "rgba(255,255,255,0.06)",
-                border: msg.sender === "seller" ? "none" : "1px solid rgba(255,255,255,0.08)"
-              }}>
-                <p style={{ fontWeight: 600, fontSize: "0.72rem", marginBottom: 4, color: msg.sender === "seller" ? "rgba(255,255,255,0.7)" : "#94A3B8" }}>
-                  {msg.sender_name}
-                </p>
-                <p style={{ fontSize: "0.9rem", lineHeight: 1.5, color: msg.sender === "seller" ? "#FFFFFF" : "#E2E8F0" }}>
-                  {msg.message}
-                </p>
-                <p style={{ fontSize: "0.65rem", marginTop: 4, color: msg.sender === "seller" ? "rgba(255,255,255,0.4)" : "#475569" }}>
-                  {new Date(msg.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                </p>
-              </div>
-            </div>
-          ))}
-          <div ref={chatEndRef} />
+      <div style={{ display: "flex", gap: 16, minHeight: 500 }}>
+        {/* Customer list */}
+        <div style={{ width: 260, flexShrink: 0 }}>
+          <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#334155", marginBottom: 12 }}>Conversas</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {customerChats.length === 0 && (
+              <p style={{ color: "#475569", fontSize: "0.85rem", textAlign: "center", padding: 20 }}>Nenhuma conversa ainda</p>
+            )}
+            {customerChats.map((chat) => {
+              const isActive = selectedPhone === chat.phone;
+              return (
+                <button key={chat.phone} onClick={() => setSelectedPhone(chat.phone)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10, width: "100%",
+                    padding: "12px 14px", borderRadius: 12, border: "none", cursor: "pointer",
+                    textAlign: "left", transition: "all .2s",
+                    background: isActive ? "linear-gradient(135deg, #25D366, #128C7E)" : "rgba(255,255,255,0.04)",
+                    color: isActive ? "#FFFFFF" : "#E2E8F0",
+                    boxShadow: isActive ? "0 4px 16px rgba(37,211,102,0.3)" : "none"
+                  }}>
+                  <div style={{
+                    width: 38, height: 38, borderRadius: "50%", flexShrink: 0,
+                    background: isActive ? "rgba(255,255,255,0.2)" : "rgba(37,211,102,0.12)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "0.85rem", fontWeight: 700
+                  }}>
+                    {chat.customerName?.charAt(0)?.toUpperCase() || "?"}
+                  </div>
+                  <div style={{ overflow: "hidden", flex: 1 }}>
+                    <p style={{ fontWeight: 600, fontSize: "0.88rem", marginBottom: 2 }}>{chat.customerName || chat.phone}</p>
+                    <p style={{ fontSize: "0.75rem", opacity: 0.6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{chat.lastMessage}</p>
+                  </div>
+                  <span style={{ fontSize: "0.68rem", opacity: 0.5, flexShrink: 0 }}>{formatTime(chat.lastTime)}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Input */}
-        <div style={{ 
-          padding: "16px 22px", borderTop: "1px solid rgba(255,255,255,0.06)",
-          display: "flex", gap: 10
-        }}>
-          <input
-            value={newMsg}
-            onChange={(e) => setNewMsg(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            placeholder={selectedSlug ? `Mensagem como ${funcionarios.find(f => f.slug === selectedSlug)?.name || "vendedor"}...` : "Selecione um funcionário..."}
-            className="input-dark"
-            style={{ flex: 1, padding: "13px 18px", fontSize: "0.93rem" }}
-          />
-          <button onClick={sendMessage} disabled={sending || !newMsg.trim() || !selectedSlug} className="btn-primary"
-            style={{ 
-              display: "flex", alignItems: "center", gap: 7, padding: "13px 22px", borderRadius: 13, fontSize: "0.88rem",
-              opacity: sending || !newMsg.trim() || !selectedSlug ? 0.5 : 1
-            }}>
-            <Send size={14} /> Enviar
-          </button>
+        {/* Chat area */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          {!selectedPhone ? (
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ textAlign: "center" }}>
+                <MessageCircle size={40} color="#1E293B" style={{ margin: "0 auto 12px", display: "block" }} />
+                <p style={{ color: "#475569", fontSize: "0.95rem" }}>Selecione uma conversa</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Chat header */}
+              <div style={{ padding: "12px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: "50%",
+                  background: "rgba(37,211,102,0.15)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "0.82rem", fontWeight: 700, color: "#34D399"
+                }}>
+                  {customerChats.find(c => c.phone === selectedPhone)?.customerName?.charAt(0)?.toUpperCase() || "?"}
+                </div>
+                <div>
+                  <p style={{ fontWeight: 600, color: "#E2E8F0", fontSize: "0.92rem" }}>
+                    {customerChats.find(c => c.phone === selectedPhone)?.customerName || selectedPhone}
+                  </p>
+                  <p style={{ fontSize: "0.72rem", color: "#475569" }}>{selectedPhone}</p>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div style={{ flex: 1, maxHeight: 400, overflowY: "auto", padding: "14px 18px", display: "flex", flexDirection: "column", gap: 10 }}>
+                {messages.map((msg) => (
+                  <div key={msg.id} style={{ display: "flex", justifyContent: msg.sender === "seller" ? "flex-end" : "flex-start" }}>
+                    <div style={{
+                      maxWidth: "75%", padding: "10px 14px", borderRadius: 16,
+                      background: msg.sender === "seller"
+                        ? "linear-gradient(135deg, #6366F1, #8B5CF6)"
+                        : "rgba(255,255,255,0.06)",
+                      color: msg.sender === "seller" ? "#FFFFFF" : "#E2E8F0",
+                      border: msg.sender === "seller" ? "none" : "1px solid rgba(255,255,255,0.08)"
+                    }}>
+                      <p style={{ fontWeight: 600, fontSize: "0.72rem", marginBottom: 3, opacity: 0.6 }}>{msg.sender_name}</p>
+                      <p style={{ fontSize: "0.88rem", lineHeight: 1.5 }}>{msg.message}</p>
+                      <p style={{ fontSize: "0.66rem", marginTop: 4, opacity: 0.4 }}>{formatTime(msg.created_at)}</p>
+                    </div>
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Input */}
+              <div style={{ padding: "12px 18px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 8 }}>
+                <input
+                  value={newMsg}
+                  onChange={(e) => setNewMsg(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                  placeholder="Digite sua mensagem..."
+                  className="input-dark"
+                  style={{ flex: 1, padding: "12px 16px", borderRadius: 12, fontSize: "0.9rem" }}
+                />
+                <button onClick={sendMessage} disabled={sending || !newMsg.trim()} className="btn-primary"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 12 }}>
+                  <Send size={16} color="#0D0F18" />
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
