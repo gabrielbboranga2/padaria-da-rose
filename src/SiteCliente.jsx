@@ -1424,12 +1424,13 @@ function ChatGeral({ onClose }) {
   }, []);
 
   const loadMessages = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("chat_messages")
       .select("*")
       .eq("employee_slug", "geral")
       .order("created_at", { ascending: true })
       .limit(100);
+    if (error) console.error("Erro ao carregar mensagens:", error);
     if (data) setMessages(data);
   };
 
@@ -1446,13 +1447,14 @@ function ChatGeral({ onClose }) {
   const sendMessage = async () => {
     if (!newMsg.trim() || !customerName.trim()) return;
     setSending(true);
-    await supabase.from("chat_messages").insert({
+    const { error } = await supabase.from("chat_messages").insert({
       order_id: null,
       employee_slug: "geral",
       sender: "customer",
       sender_name: customerName,
       message: newMsg.trim(),
     });
+    if (error) console.error("Erro ao enviar mensagem:", error);
     setNewMsg("");
     setSending(false);
     loadMessages();

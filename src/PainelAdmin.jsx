@@ -1027,12 +1027,13 @@ function AbaChat() {
 
   const loadMessages = async () => {
     if (!selectedSlug) return;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("chat_messages")
       .select("*")
       .eq("employee_slug", selectedSlug)
       .order("created_at", { ascending: true })
       .limit(100);
+    if (error) console.error("Erro ao carregar mensagens:", error);
     if (data) setMessages(data);
   };
 
@@ -1043,12 +1044,13 @@ function AbaChat() {
   const sendMessage = async () => {
     if (!newMsg.trim() || !selectedSlug) return;
     setSending(true);
-    await supabase.from("chat_messages").insert({
+    const { error } = await supabase.from("chat_messages").insert({
       employee_slug: selectedSlug,
       sender: "seller",
       sender_name: "Rose",
       message: newMsg.trim(),
     });
+    if (error) console.error("Erro ao enviar mensagem:", error);
     setNewMsg("");
     setSending(false);
     loadMessages();
