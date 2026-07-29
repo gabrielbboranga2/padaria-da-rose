@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Lock, LogOut, Package, ShoppingBag, Users, Plus, Trash2, Printer,
   Copy, Check, Wheat, ChevronDown, Bell, TrendingUp, Clock, AlertCircle,
@@ -1001,7 +1001,7 @@ function AbaFuncionarios() {
 }
 
 /* ═══════════════════════════════════════════════
-   ABA CHAT
+   ABA CHAT - Reescrita do zero
    ═══════════════════════════════════════════════ */
 function AbaChat({ session }) {
   const [customerChats, setCustomerChats] = useState([]);
@@ -1016,57 +1016,66 @@ function AbaChat({ session }) {
     || session?.user?.email?.split("@")[0]
     || "Atendente";
 
-  const loadCustomerChats = async () => {
+  const loadCustomerChats = useCallback(async () => {
     const { data: allMsgs } = await supabase
       .from("chat_messages")
-      .select("employee_slug, sender_name, message, created_at")
-      .order("created_at", { ascending: false });
+      .select("employee_slug, sender_name, sender, message, created_at")
+      .order("created_at", { ascending: false })
+      .limit(500);
 
     if (!allMsgs) return;
 
     const chatMap = {};
     allMsgs.forEach((msg) => {
       const slug = msg.employee_slug;
+      if (!slug) return;
       if (!chatMap[slug]) {
         chatMap[slug] = {
           phone: slug,
-          customerName: msg.sender === "customer" ? msg.sender_name : "",
+          customerName: "",
           lastMessage: msg.message,
           lastTime: msg.created_at,
+          unread: 0,
         };
       }
       if (msg.sender === "customer" && !chatMap[slug].customerName) {
         chatMap[slug].customerName = msg.sender_name;
       }
+      if (msg.sender === "customer" && !chatMap[slug].lastMessage) {
+        chatMap[slug].lastMessage = msg.message;
+        chatMap[slug].lastTime = msg.created_at;
+      }
     });
 
-    setCustomerChats(Object.values(chatMap));
-  };
+    const sorted = Object.values(chatMap).sort(
+      (a, b) => new Date(b.lastTime) - new Date(a.lastTime)
+    );
+    setCustomerChats(sorted);
+  }, []);
+
+  const loadMessages = useCallback(async () => {
+    if (!selectedPhone) return;
+    const { data } = await supabase
+      .from("chat_messages")
+      .select("*")
+      .eq("employee_slug", selectedPhone)
+      .order("created_at", { ascending: true })
+      .limit(200);
+    if (data) setMessages(data);
+  }, [selectedPhone]);
 
   useEffect(() => {
     loadCustomerChats();
     const interval = setInterval(loadCustomerChats, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [loadCustomerChats]);
 
   useEffect(() => {
-    if (!selectedPhone) return;
+    if (!selectedPhone) { setMessages([]); return; }
     loadMessages();
     const interval = setInterval(loadMessages, 2000);
     return () => clearInterval(interval);
-  }, [selectedPhone]);
-
-  const loadMessages = async () => {
-    if (!selectedPhone) return;
-    const { data, error } = await supabase
-      .from("chat_messages")
-      .select("*")
-      .eq("employee_slug", selectedPhone)
-      .order("created_at", { ascending: true })
-      .limit(100);
-    if (error) console.error("Erro ao carregar mensagens:", error);
-    if (data) setMessages(data);
-  };
+  }, [selectedPhone, loadMessages]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -1076,22 +1085,31 @@ function AbaChat({ session }) {
     if (!newMsg.trim() || !selectedPhone) return;
     setSending(true);
     const { error } = await supabase.from("chat_messages").insert({
+      order_id: null,
       employee_slug: selectedPhone,
       sender: "seller",
       sender_name: employeeName,
       message: newMsg.trim(),
     });
-    if (error) console.error("Erro ao enviar mensagem:", error);
+    if (error) console.error("Erro ao enviar:", error);
     setNewMsg("");
     setSending(false);
     await loadMessages();
     await loadCustomerChats();
   };
 
-  const formatTime = (ts) => {
+  const formatTime = (ts) => new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const formatDate = (ts) => {
     const d = new Date(ts);
-    return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    const today = new Date();
+    if (d.toDateString() === today.toDateString()) return "Hoje";
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (d.toDateString() === yesterday.toDateString()) return "Ontem";
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
   };
+
+  const selectedChat = customerChats.find(c => c.phone === selectedPhone);
 
   return (
     <div className="animate-fade-up">
@@ -1099,16 +1117,23 @@ function AbaChat({ session }) {
         <h2 className="font-display" style={{ fontSize: "1.6rem", fontWeight: 700, color: "#F1F5F9", letterSpacing: "-0.02em", marginBottom: 4 }}>
           Chat com Clientes
         </h2>
-        <p style={{ fontSize: "0.83rem", color: "#475569" }}>Conversas individuais — respondendo como <strong style={{ color: "#E8C36A" }}>{employeeName}</strong></p>
+        <p style={{ fontSize: "0.83rem", color: "#475569" }}>
+          Conversas individuais — respondendo como <strong style={{ color: "#E8C36A" }}>{employeeName}</strong>
+        </p>
       </div>
 
-      <div style={{ display: "flex", gap: 16, minHeight: 500 }}>
+      <div style={{ display: "flex", gap: 16, minHeight: 520 }}>
         {/* Customer list */}
-        <div style={{ width: 260, flexShrink: 0 }}>
-          <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#334155", marginBottom: 12 }}>Conversas</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ width: 280, flexShrink: 0, background: "rgba(255,255,255,0.03)", borderRadius: 16, padding: 16, border: "1px solid rgba(255,255,255,0.06)" }}>
+          <p style={{ fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#64748B", marginBottom: 14, paddingLeft: 4 }}>
+            Conversas ({customerChats.length})
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: 460, overflowY: "auto" }}>
             {customerChats.length === 0 && (
-              <p style={{ color: "#475569", fontSize: "0.85rem", textAlign: "center", padding: 20 }}>Nenhuma conversa ainda</p>
+              <div style={{ textAlign: "center", padding: "40px 12px" }}>
+                <MessageCircle size={32} color="#1E293B" style={{ margin: "0 auto 10px", opacity: 0.3 }} />
+                <p style={{ color: "#475569", fontSize: "0.82rem" }}>Nenhuma conversa ainda</p>
+              </div>
             )}
             {customerChats.map((chat) => {
               const isActive = selectedPhone === chat.phone;
@@ -1118,23 +1143,37 @@ function AbaChat({ session }) {
                     display: "flex", alignItems: "center", gap: 10, width: "100%",
                     padding: "12px 14px", borderRadius: 12, border: "none", cursor: "pointer",
                     textAlign: "left", transition: "all .2s",
-                    background: isActive ? "linear-gradient(135deg, #25D366, #128C7E)" : "rgba(255,255,255,0.04)",
-                    color: isActive ? "#FFFFFF" : "#E2E8F0",
-                    boxShadow: isActive ? "0 4px 16px rgba(37,211,102,0.3)" : "none"
+                    background: isActive ? "linear-gradient(135deg, #25D366, #128C7E)" : "transparent",
+                    color: isActive ? "#FFFFFF" : "#CBD5E1",
                   }}>
                   <div style={{
-                    width: 38, height: 38, borderRadius: "50%", flexShrink: 0,
+                    width: 40, height: 40, borderRadius: "50%", flexShrink: 0,
                     background: isActive ? "rgba(255,255,255,0.2)" : "rgba(37,211,102,0.12)",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "0.85rem", fontWeight: 700
+                    fontSize: "0.88rem", fontWeight: 700,
+                    color: isActive ? "#FFFFFF" : "#34D399"
                   }}>
-                    {chat.customerName?.charAt(0)?.toUpperCase() || "?"}
+                    {chat.customerName?.charAt(0)?.toUpperCase() || chat.phone?.slice(-2) || "?"}
                   </div>
-                  <div style={{ overflow: "hidden", flex: 1 }}>
-                    <p style={{ fontWeight: 600, fontSize: "0.88rem", marginBottom: 2 }}>{chat.customerName || chat.phone}</p>
-                    <p style={{ fontSize: "0.75rem", opacity: 0.6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{chat.lastMessage}</p>
+                  <div style={{ overflow: "hidden", flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
+                      <p style={{ fontWeight: 600, fontSize: "0.88rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {chat.customerName || "Cliente"}
+                      </p>
+                      <span style={{ fontSize: "0.66rem", opacity: 0.5, flexShrink: 0, marginLeft: 6 }}>
+                        {formatDate(chat.lastTime)}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <p style={{ fontSize: "0.75rem", opacity: 0.55, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>
+                        {chat.lastMessage}
+                      </p>
+                      <span style={{ fontSize: "0.65rem", opacity: 0.4, flexShrink: 0 }}>
+                        {formatTime(chat.lastTime)}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: "0.68rem", opacity: 0.35, marginTop: 2 }}>{chat.phone}</p>
                   </div>
-                  <span style={{ fontSize: "0.68rem", opacity: 0.5, flexShrink: 0 }}>{formatTime(chat.lastTime)}</span>
                 </button>
               );
             })}
@@ -1142,40 +1181,46 @@ function AbaChat({ session }) {
         </div>
 
         {/* Chat area */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "rgba(255,255,255,0.03)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
           {!selectedPhone ? (
             <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <div style={{ textAlign: "center" }}>
-                <MessageCircle size={40} color="#1E293B" style={{ margin: "0 auto 12px", display: "block" }} />
-                <p style={{ color: "#475569", fontSize: "0.95rem" }}>Selecione uma conversa</p>
+                <MessageCircle size={48} color="#1E293B" style={{ margin: "0 auto 14px", display: "block", opacity: 0.3 }} />
+                <p style={{ color: "#475569", fontSize: "1rem", fontWeight: 500 }}>Selecione uma conversa</p>
+                <p style={{ color: "#334155", fontSize: "0.82rem", marginTop: 4 }}>para começar a responder</p>
               </div>
             </div>
           ) : (
             <>
               {/* Chat header */}
-              <div style={{ padding: "12px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{
-                  width: 36, height: 36, borderRadius: "50%",
+                  width: 40, height: 40, borderRadius: "50%",
                   background: "rgba(37,211,102,0.15)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "0.82rem", fontWeight: 700, color: "#34D399"
+                  fontSize: "0.88rem", fontWeight: 700, color: "#34D399"
                 }}>
-                  {customerChats.find(c => c.phone === selectedPhone)?.customerName?.charAt(0)?.toUpperCase() || "?"}
+                  {selectedChat?.customerName?.charAt(0)?.toUpperCase() || selectedPhone?.slice(-2) || "?"}
                 </div>
                 <div>
-                  <p style={{ fontWeight: 600, color: "#E2E8F0", fontSize: "0.92rem" }}>
-                    {customerChats.find(c => c.phone === selectedPhone)?.customerName || selectedPhone}
+                  <p style={{ fontWeight: 600, color: "#E2E8F0", fontSize: "0.95rem" }}>
+                    {selectedChat?.customerName || "Cliente"}
                   </p>
                   <p style={{ fontSize: "0.72rem", color: "#475569" }}>{selectedPhone}</p>
                 </div>
               </div>
 
               {/* Messages */}
-              <div style={{ flex: 1, maxHeight: 400, overflowY: "auto", padding: "14px 18px", display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ flex: 1, maxHeight: 380, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 10, background: "rgba(0,0,0,0.15)" }}>
+                {messages.length === 0 && (
+                  <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                    <p style={{ color: "#475569", fontSize: "0.88rem" }}>Nenhuma mensagem ainda</p>
+                  </div>
+                )}
                 {messages.map((msg) => (
                   <div key={msg.id} style={{ display: "flex", justifyContent: msg.sender === "seller" ? "flex-end" : "flex-start" }}>
                     <div style={{
-                      maxWidth: "75%", padding: "10px 14px", borderRadius: 16,
+                      maxWidth: "72%", padding: "10px 14px", borderRadius: 16,
                       background: msg.sender === "seller"
                         ? "linear-gradient(135deg, #6366F1, #8B5CF6)"
                         : "rgba(255,255,255,0.06)",
@@ -1192,17 +1237,21 @@ function AbaChat({ session }) {
               </div>
 
               {/* Input */}
-              <div style={{ padding: "12px 18px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 8 }}>
+              <div style={{ padding: "14px 20px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: 10 }}>
                 <input
                   value={newMsg}
                   onChange={(e) => setNewMsg(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                  onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
                   placeholder="Digite sua mensagem..."
                   className="input-dark"
                   style={{ flex: 1, padding: "12px 16px", borderRadius: 12, fontSize: "0.9rem" }}
                 />
                 <button onClick={sendMessage} disabled={sending || !newMsg.trim()} className="btn-primary"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 44, height: 44, borderRadius: 12 }}>
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    width: 44, height: 44, borderRadius: 12,
+                    opacity: sending || !newMsg.trim() ? 0.5 : 1
+                  }}>
                   <Send size={16} color="#0D0F18" />
                 </button>
               </div>
