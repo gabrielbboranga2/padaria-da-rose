@@ -523,7 +523,14 @@ function AbaPedidos() {
                       </div>
                       <p style={{ fontWeight: 700, color: "#F1F5F9", fontSize: "1rem", marginBottom: 4 }}>{p.customer_name}</p>
                       <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: 2 }}>
-                        {p.customer_phone} · Retirada: <strong style={{ color: "#94A3B8" }}>{p.pickup_time}</strong>
+                        {p.customer_phone} · Retirada:{" "}
+                        {p.pickup_time === "Combinar no chat" ? (
+                          <strong style={{ color: "#FBBF24", background: "rgba(251,191,36,0.12)", padding: "2px 8px", borderRadius: 6, border: "1px solid rgba(251,191,36,0.3)" }}>
+                            💬 Combinar no chat
+                          </strong>
+                        ) : (
+                          <strong style={{ color: "#94A3B8" }}>{p.pickup_time}</strong>
+                        )}
                       </p>
                       {p.employee_slug && <p style={{ fontSize: "0.74rem", fontFamily: "'JetBrains Mono', monospace", color: "#E8C36A", opacity: .7 }}>via: {p.employee_slug}</p>}
                       {p.notes && <p style={{ fontSize: "0.78rem", color: "#475569", marginTop: 5, fontStyle: "italic" }}>💬 {p.notes}</p>}

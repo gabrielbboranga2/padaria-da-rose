@@ -84,8 +84,53 @@ export default function SiteCliente() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedTime, setSelectedTime] = useState(null);
+  const [combinarNoChat, setCombinarNoChat] = useState(false);
 
   const employeeSlug = useMemo(() => new URLSearchParams(window.location.search).get("func"), []);
+
+  const generateDays = () => {
+    const days = [];
+    const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      days.push({
+        date: d,
+        label: i === 0 ? "Hoje" : dayNames[d.getDay()],
+        dateStr: `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`,
+        isToday: i === 0,
+        isSunday: d.getDay() === 0,
+      });
+    }
+    return days;
+  };
+
+  const generateTimeSlots = (isSunday) => {
+    const slots = [];
+    const endHour = isSunday ? 13 : 19;
+    const now = new Date();
+    const currentHour = now.getHours();
+    for (let h = 5; h <= endHour; h++) {
+      const isPast = selectedDate?.isToday && h <= currentHour;
+      slots.push({ hour: h, label: `${h}h`, disabled: isPast });
+    }
+    return slots;
+  };
+
+  useEffect(() => {
+    if (combinarNoChat) {
+      setCustomer(prev => ({ ...prev, retirada: "Combinar no chat" }));
+      setSelectedDate(null);
+      setSelectedTime(null);
+    } else if (selectedDate && selectedTime !== null) {
+      const dayStr = `${selectedDate.label}, ${selectedDate.dateStr} às ${selectedTime}h`;
+      setCustomer(prev => ({ ...prev, retirada: dayStr }));
+    } else {
+      setCustomer(prev => ({ ...prev, retirada: "" }));
+    }
+  }, [selectedDate, selectedTime, combinarNoChat]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -782,7 +827,6 @@ TOTAL: ${money(localOrder.total)}`;
               {[
                 { label: "Nome completo", key: "nome", placeholder: "Seu nome completo", type: "text", icon: "👤" },
                 { label: "Telefone", key: "telefone", placeholder: "(18) 9XXXX-XXXX", type: "tel", icon: "📱" },
-                { label: "Horário de retirada", key: "retirada", placeholder: "Ex: hoje às 17h", type: "text", icon: "⏰" },
               ].map((field) => (
                 <div key={field.key} style={{ marginBottom: 20 }}>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#78350F", marginBottom: 8 }}>
@@ -803,6 +847,80 @@ TOTAL: ${money(localOrder.total)}`;
                   />
                 </div>
               ))}
+
+              {/* DateTimePicker — Retirada */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "#78350F", marginBottom: 10 }}>
+                  ⏰ Quando vai retirar?
+                </label>
+
+                <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 8, marginBottom: 14, scrollbarWidth: "none" }}>
+                  {generateDays().map((day, i) => {
+                    const isSelected = selectedDate?.dateStr === day.dateStr && !combinarNoChat;
+                    return (
+                      <button key={i} type="button" onClick={() => { if (!combinarNoChat) { setSelectedDate(day); setSelectedTime(null); } }}
+                        style={{
+                          minWidth: 72, padding: "12px 10px", borderRadius: 14, border: isSelected ? "2px solid #F59E0B" : "1.5px solid rgba(245,158,11,0.15)",
+                          background: isSelected ? "linear-gradient(135deg, #F59E0B, #F97316)" : "#FFFFFF",
+                          color: isSelected ? "#FFFFFF" : "#5C3D2E", cursor: combinarNoChat ? "not-allowed" : "pointer",
+                          opacity: combinarNoChat ? 0.4 : 1, transition: "all 0.25s", flexShrink: 0,
+                          boxShadow: isSelected ? "0 4px 16px rgba(245,158,11,0.35)" : "0 2px 8px rgba(0,0,0,0.04)"
+                        }}>
+                        <p style={{ fontSize: "0.72rem", fontWeight: 700, marginBottom: 2 }}>{day.label}</p>
+                        <p style={{ fontSize: "0.82rem", fontWeight: 600 }}>{day.dateStr}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {selectedDate && !combinarNoChat && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+                    {generateTimeSlots(selectedDate.isSunday).map((slot) => {
+                      const isSelected = selectedTime === slot.hour;
+                      return (
+                        <button key={slot.hour} type="button" onClick={() => { if (!slot.disabled) setSelectedTime(slot.hour); }}
+                          style={{
+                            width: 56, height: 44, borderRadius: 12,
+                            border: isSelected ? "2px solid #F59E0B" : "1.5px solid rgba(245,158,11,0.15)",
+                            background: isSelected ? "linear-gradient(135deg, #F59E0B, #F97316)" : "#FFFFFF",
+                            color: isSelected ? "#FFFFFF" : slot.disabled ? "#D1C4B8" : "#5C3D2E",
+                            cursor: slot.disabled ? "not-allowed" : "pointer",
+                            opacity: slot.disabled ? 0.4 : 1, fontSize: "0.88rem", fontWeight: 600,
+                            transition: "all 0.2s",
+                            boxShadow: isSelected ? "0 4px 12px rgba(245,158,11,0.3)" : "none"
+                          }}>
+                          {slot.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <button type="button" onClick={() => setCombinarNoChat(!combinarNoChat)}
+                  style={{
+                    width: "100%", padding: "14px", borderRadius: 14, border: combinarNoChat ? "2px solid #25D366" : "1.5px solid rgba(37,211,102,0.25)",
+                    background: combinarNoChat ? "linear-gradient(135deg, #25D366, #128C7E)" : "#FFFFFF",
+                    color: combinarNoChat ? "#FFFFFF" : "#128C7E",
+                    cursor: "pointer", fontWeight: 700, fontSize: "0.92rem",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    boxShadow: combinarNoChat ? "0 4px 16px rgba(37,211,102,0.35)" : "0 2px 8px rgba(0,0,0,0.04)",
+                    transition: "all 0.25s"
+                  }}>
+                  💬 Combinar no chat
+                </button>
+
+                {combinarNoChat && (
+                  <p style={{ fontSize: "0.82rem", color: "#128C7E", marginTop: 8, textAlign: "center", fontWeight: 500 }}>
+                    A padaria vai entrar em contato para combinar o horário.
+                  </p>
+                )}
+
+                {customer.retirada && !combinarNoChat && (
+                  <p style={{ fontSize: "0.85rem", color: "#78350F", marginTop: 10, fontWeight: 600, textAlign: "center" }}>
+                    ✅ Retirada: {customer.retirada}
+                  </p>
+                )}
+              </div>
 
               {!loggedIn && customer.nome && customer.telefone && (
                 <button type="button" onClick={handleLoginSave}
@@ -934,7 +1052,7 @@ TOTAL: ${money(localOrder.total)}`;
             {employeeSlug && (
               <ChatCliente orderNumber={orderNumber} employeeSlug={employeeSlug} customerName={customer.nome} />
             )}
-            <button onClick={() => { setCart({}); setCartObs({}); setCustomer({ nome: "", telefone: "", retirada: "" }); setStep("menu"); }}
+            <button onClick={() => { setCart({}); setCartObs({}); setCustomer({ nome: "", telefone: "", retirada: "" }); setSelectedDate(null); setSelectedTime(null); setCombinarNoChat(false); setStep("menu"); }}
               className="btn-press"
               style={{
                 padding: "14px 36px", borderRadius: 100,
