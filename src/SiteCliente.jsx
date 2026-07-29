@@ -134,8 +134,22 @@ export default function SiteCliente() {
   }, [selectedDate, selectedTime, combinarNoChat]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
+    const handleAuth = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get("code");
+
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) {
+          console.error("PKCE exchange error:", exchangeError);
+        } else {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }
+
+      const { data: { session }, error } = await supabase.auth.getSession();
       if (error) console.error("Session error:", error.message);
+
       setSession(session);
       if (session?.user) {
         const meta = session.user.user_metadata || {};
@@ -143,6 +157,7 @@ export default function SiteCliente() {
         const email = session.user.email || "";
         setCustomer(prev => ({ ...prev, nome: prev.nome || nome, email: email || prev.email }));
         setLoggedIn(true);
+        setShowLoginModal(false);
         saveCustomerData({ nome, telefone: customer.telefone, email });
       } else {
         const saved = getCustomerData();
@@ -151,19 +166,23 @@ export default function SiteCliente() {
           setLoggedIn(true);
         }
       }
-    });
+    };
+
+    handleAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
+      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") && session?.user) {
         const meta = session.user.user_metadata || {};
         const nome = meta.full_name || meta.name || "";
         const email = session.user.email || "";
         setCustomer(prev => ({ ...prev, nome: prev.nome || nome, email }));
         setLoggedIn(true);
+        setShowLoginModal(false);
         saveCustomerData({ nome, telefone: customer.telefone, email });
         setSession(session);
       } else if (event === "SIGNED_OUT") {
         setSession(null);
+        setLoggedIn(false);
       }
     });
 
@@ -214,12 +233,21 @@ export default function SiteCliente() {
   const handleGoogleLogin = async () => {
     setLoginLoading(true);
     setLoginError("");
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin }
-    });
-    if (error) {
-      setLoginError("Erro ao entrar com Google. Tente novamente.");
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: { access_type: "offline", prompt: "consent" },
+        },
+      });
+      if (error) {
+        setLoginError("Erro ao entrar com Google. Tente novamente.");
+        setLoginLoading(false);
+      }
+    } catch (err) {
+      console.error("Google login error:", err);
+      setLoginError("Erro inesperado. Tente novamente.");
       setLoginLoading(false);
     }
   };

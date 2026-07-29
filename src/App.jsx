@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
 import SiteCliente from "./SiteCliente.jsx";
 import PainelAdmin from "./PainelAdmin.jsx";
+import AuthCallback from "./AuthCallback.jsx";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -46,6 +47,7 @@ export default function App() {
     <ErrorBoundary>
       <Analytics />
       <Routes>
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/" element={<SiteCliente />} />
         <Route path="/admin" element={<PainelAdmin />} />
       </Routes>
