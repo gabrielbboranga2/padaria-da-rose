@@ -134,7 +134,8 @@ export default function SiteCliente() {
   }, [selectedDate, selectedTime, combinarNoChat]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) console.error("Session error:", error.message);
       setSession(session);
       if (session?.user) {
         const meta = session.user.user_metadata || {};
@@ -152,13 +153,17 @@ export default function SiteCliente() {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session?.user) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
         const meta = session.user.user_metadata || {};
         const nome = meta.full_name || meta.name || "";
-        setCustomer(prev => ({ ...prev, nome: prev.nome || nome }));
+        const email = session.user.email || "";
+        setCustomer(prev => ({ ...prev, nome: prev.nome || nome, email }));
         setLoggedIn(true);
+        saveCustomerData({ nome, telefone: customer.telefone, email });
+        setSession(session);
+      } else if (event === "SIGNED_OUT") {
+        setSession(null);
       }
     });
 
@@ -211,7 +216,7 @@ export default function SiteCliente() {
     setLoginError("");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.origin + window.location.pathname }
+      options: { redirectTo: window.location.origin }
     });
     if (error) {
       setLoginError("Erro ao entrar com Google. Tente novamente.");
