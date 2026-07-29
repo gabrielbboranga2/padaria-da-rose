@@ -136,17 +136,17 @@ const GLOBAL_CSS = `
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius:3px; }
 
   @media print {
-    body * { visibility: hidden; }
-    .comanda-print, .comanda-print * { visibility: visible; }
-    .comanda-print { 
-      position: fixed; top: 0; left: 0; 
+    body * { visibility: hidden !important; }
+    .comanda-print, .comanda-print * { visibility: visible !important; }
+    .comanda-print {
+      position: fixed; top: 0; left: 0;
       width: 80mm; font-family: monospace;
-      font-size: 12px; line-height: 1.4;
+      font-size: 14px; line-height: 1.4;
       color: #000; background: #fff;
-      padding: 0; margin: 0;
+      padding: 0; margin: 0; display: block !important;
     }
-    .comanda-print p { margin: 2px 0; white-space: pre-wrap; }
-    .comanda-print .divider { border-top: 1px dashed #000; margin: 6px 0; }
+    .comanda-print p { margin: 3px 0; white-space: pre-wrap; }
+    .comanda-print .divider { border-top: 1px dashed #000; margin: 8px 0; }
   }
 `;
 
@@ -589,27 +589,28 @@ function AbaPedidos() {
 
       {/* Print area — formatted for TANCA TP-550 (80mm) */}
       {pedidoImpresso && (
-        <div ref={printRef} className="comanda-print" style={{ display: "none" }}>
-          <div className="comanda-print" style={{ padding: "4mm" }}>
-            <p style={{ textAlign: "center", fontWeight: 700, fontSize: "14px" }}>PADARIA DA ROSE</p>
-            <p style={{ textAlign: "center", fontSize: "10px" }}>Pedido #{pedidoImpresso.id}</p>
-            <p style={{ textAlign: "center", fontSize: "10px" }}>{new Date(pedidoImpresso.created_at).toLocaleString("pt-BR")}</p>
+        <div ref={printRef} className="comanda-print">
+          <div style={{ padding: "4mm" }}>
+            <p style={{ textAlign: "center", fontWeight: 700, fontSize: "18px", marginBottom: 2 }}>RETIRADA: {pedidoImpresso.pickup_time || "-"}</p>
             <div className="divider" />
-            <p style={{ fontWeight: 600 }}>{pedidoImpresso.customer_name}</p>
-            <p>{pedidoImpresso.customer_phone}</p>
-            <p>Retirada: {pedidoImpresso.pickup_time || "-"}</p>
-            {pedidoImpresso.employee_slug && <p>Via: {pedidoImpresso.employee_slug}</p>}
+            <p style={{ textAlign: "center", fontWeight: 700, fontSize: "16px" }}>PADARIA DA ROSE</p>
+            <p style={{ textAlign: "center", fontSize: "12px" }}>Pedido #{pedidoImpresso.id}</p>
+            <p style={{ textAlign: "center", fontSize: "12px" }}>{new Date(pedidoImpresso.created_at).toLocaleString("pt-BR")}</p>
+            <div className="divider" />
+            <p style={{ fontWeight: 600, fontSize: "14px" }}>{pedidoImpresso.customer_name}</p>
+            <p style={{ fontSize: "14px" }}>{pedidoImpresso.customer_phone}</p>
+            {pedidoImpresso.employee_slug && <p style={{ fontSize: "13px" }}>Via: {pedidoImpresso.employee_slug}</p>}
             <div className="divider" />
             {(pedidoImpresso.order_items || []).map((it) => (
-              <div key={it.id} style={{ marginBottom: 3 }}>
-                <p style={{ fontWeight: 600 }}>{it.qty}x {it.product_name} — {money(it.unit_price * it.qty)}</p>
-                {it.observation && <p style={{ fontSize: "10px", fontStyle: "italic", paddingLeft: "4mm" }}>→ {it.observation}</p>}
+              <div key={it.id} style={{ marginBottom: 4 }}>
+                <p style={{ fontWeight: 600, fontSize: "14px" }}>{it.qty}x {it.product_name} — {money(it.unit_price * it.qty)}</p>
+                {it.observation && <p style={{ fontSize: "12px", fontStyle: "italic", paddingLeft: "4mm" }}>→ {it.observation}</p>}
               </div>
             ))}
             <div className="divider" />
-            <p style={{ fontWeight: 700, fontSize: "13px" }}>TOTAL: {money(pedidoImpresso.total)}</p>
-            {pedidoImpresso.notes && <p style={{ fontSize: "10px", fontStyle: "italic" }}>Obs: {pedidoImpresso.notes}</p>}
-            <div style={{ height: "8mm" }} />
+            <p style={{ fontWeight: 700, fontSize: "16px" }}>TOTAL: {money(pedidoImpresso.total)}</p>
+            {pedidoImpresso.notes && <p style={{ fontSize: "12px", fontStyle: "italic" }}>Obs: {pedidoImpresso.notes}</p>}
+            <div style={{ height: "10mm" }} />
           </div>
         </div>
       )}
