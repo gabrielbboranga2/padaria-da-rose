@@ -135,6 +135,10 @@ const GLOBAL_CSS = `
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius:3px; }
 
+  @media (max-width: 640px) {
+    .attendant-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  }
+
   @media print {
     body * { visibility: hidden !important; }
     .comanda-print, .comanda-print * { visibility: visible !important; }
@@ -150,9 +154,131 @@ const GLOBAL_CSS = `
   }
 `;
 
+const DEFAULT_ATTENDANTS = [
+  { id: "gabriel",   name: "Gabriel",        color: "#6366F1", emoji: "👨‍💼" },
+  { id: "rose",      name: "Rose",           color: "#EC4899", emoji: "👩‍🍳" },
+  { id: "ariane",    name: "Ariane",         color: "#8B5CF6", emoji: "💁‍♀️" },
+  { id: "felipe",    name: "Felipe",         color: "#F97316", emoji: "🧑‍💼" },
+  { id: "marcos",    name: "Marcos",         color: "#10B981", emoji: "👨‍🔧" },
+  { id: "padaria",   name: "Padaria da Rose", color: "#E8C36A", emoji: "🏪" },
+];
+
+const ATTENDANT_COLORS = [
+  "#6366F1", "#EC4899", "#8B5CF6", "#F97316", "#10B981", "#E8C36A",
+  "#EF4444", "#06B6D4", "#84CC16", "#F43F5E", "#14B8A6", "#A855F7",
+];
+
+const ATTENDANT_EMOJIS = [
+  "👨‍💼", "👩‍🍳", "💁‍♀️", "🧑‍💼", "👨‍🔧", "🏪",
+  "👨‍🏫", "👩‍💻", "🧑‍🎤", "👨‍🚀", "👩‍⚕️", "🧑‍🍳",
+  "😎", "🤩", "💪", "🙋", "👨", "👩",
+];
+
+function getAttendants() {
+  try {
+    const saved = localStorage.getItem("padaria_team");
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return [...DEFAULT_ATTENDANTS];
+}
+
+function saveAttendants(list) {
+  localStorage.setItem("padaria_team", JSON.stringify(list));
+}
+
+function getSavedAttendant() {
+  try { return localStorage.getItem("padaria_attendant") || null; }
+  catch { return null; }
+}
+
+function TelaSelecaoAtendente({ onSelect }) {
+  const [team, setTeam] = useState(getAttendants);
+
+  return (
+    <div style={{
+      minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+      padding: 24, background: "#080B14", position: "relative", overflow: "hidden"
+    }}>
+      <style>{GLOBAL_CSS}</style>
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", top: "20%", left: "15%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,.12) 0%, transparent 70%)" }} />
+        <div style={{ position: "absolute", bottom: "15%", right: "10%", width: 350, height: 350, borderRadius: "50%", background: "radial-gradient(circle, rgba(232,195,106,.08) 0%, transparent 70%)" }} />
+      </div>
+
+      <div className="animate-fade-up" style={{ position: "relative", zIndex: 1, textAlign: "center", width: "100%", maxWidth: 520 }}>
+        <div style={{
+          width: 80, height: 80, borderRadius: "50%", overflow: "hidden",
+          margin: "0 auto 20px",
+          boxShadow: "0 0 0 2px rgba(232,195,106,0.3), 0 0 40px rgba(232,195,106,0.15), 0 16px 40px rgba(0,0,0,.6)"
+        }}>
+          <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        </div>
+        <h2 className="font-display" style={{ fontSize: "1.8rem", fontWeight: 700, color: "#FFF8F0", marginBottom: 6 }}>
+          Quem está usando?
+        </h2>
+        <p style={{ fontSize: "0.88rem", color: "#475569", marginBottom: 36 }}>
+          Selecione seu nome para continuar
+        </p>
+
+        {team.length === 0 ? (
+          <div style={{ padding: 40 }}>
+            <p style={{ color: "#475569", fontSize: "0.92rem" }}>Nenhum membro cadastrado.</p>
+            <p style={{ color: "#334155", fontSize: "0.82rem", marginTop: 8 }}>Faça login e adicione na aba Equipe.</p>
+          </div>
+        ) : (
+          <div className="attendant-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+            {team.map((att, i) => (
+              <button key={att.id} onClick={() => onSelect(att)} className="animate-fade-up"
+                style={{
+                  background: "linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+                  border: "1.5px solid rgba(255,255,255,0.08)", borderRadius: 18, padding: "28px 16px",
+                  cursor: "pointer", transition: "all 0.3s cubic-bezier(0.22, 1, 0.36, 1)",
+                  animationDelay: `${i * 0.06}s`,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.3)"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = att.color;
+                  e.currentTarget.style.transform = "translateY(-6px) scale(1.03)";
+                  e.currentTarget.style.boxShadow = `0 16px 40px rgba(0,0,0,0.4), 0 0 20px ${att.color}33`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.3)";
+                }}>
+                <div style={{
+                  width: 56, height: 56, borderRadius: "50%",
+                  background: `linear-gradient(135deg, ${att.color}33, ${att.color}15)`,
+                  border: `2px solid ${att.color}55`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  margin: "0 auto 12px", fontSize: "1.6rem"
+                }}>
+                  {att.emoji}
+                </div>
+                <p style={{ fontWeight: 700, color: "#E2E8F0", fontSize: "0.92rem" }}>{att.name}</p>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <button onClick={() => supabase.auth.signOut()} className="btn-ghost" style={{
+          marginTop: 32, padding: "10px 24px", borderRadius: 100, fontSize: "0.82rem",
+          display: "inline-flex", alignItems: "center", gap: 7
+        }}>
+          <LogOut size={13} /> Sair da conta
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function PainelAdmin() {
   const [session, setSession] = useState(null);
   const [tab, setTab] = useState("pedidos");
+  const [attendant, setAttendant] = useState(() => {
+    const saved = getSavedAttendant();
+    return saved ? ATTENDANTS.find(a => a.id === saved) || null : null;
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -160,12 +286,23 @@ export default function PainelAdmin() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  const handleSelectAttendant = (att) => {
+    localStorage.setItem("padaria_attendant", att.id);
+    setAttendant(att);
+  };
+
+  const handleChangeAttendant = () => {
+    localStorage.removeItem("padaria_attendant");
+    setAttendant(null);
+  };
+
   if (!session) return <TelaLogin />;
+  if (!attendant) return <TelaSelecaoAtendente onSelect={handleSelectAttendant} />;
 
   const TABS = [
     { id: "pedidos",      label: "Pedidos",      icon: ShoppingBag },
     { id: "produtos",     label: "Produtos",     icon: Package     },
-    { id: "funcionarios", label: "Funcionários", icon: Users       },
+    { id: "equipe",       label: "Equipe",       icon: Users       },
     { id: "chat",         label: "Chat",         icon: MessageCircle },
   ];
 
@@ -200,15 +337,33 @@ export default function PainelAdmin() {
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 100, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)" }}>
-            <span className="dot-pulse" style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981", display: "block" }} />
-            <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#34D399", letterSpacing: "0.04em" }}>ONLINE</span>
-          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button onClick={handleChangeAttendant} style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "6px 14px 6px 8px", borderRadius: 100,
+              background: `${attendant.color}18`, border: `1px solid ${attendant.color}44`,
+              color: attendant.color, fontSize: "0.82rem", fontWeight: 600,
+              cursor: "pointer", transition: "all 0.2s"
+            }}>
+              <span style={{
+                width: 26, height: 26, borderRadius: "50%",
+                background: `${attendant.color}33`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "0.85rem"
+              }}>{attendant.emoji}</span>
+              {attendant.name}
+            </button>
 
-          <button onClick={() => supabase.auth.signOut()} className="btn-ghost"
-            style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 100, fontSize: "0.82rem", fontWeight: 500 }}>
-            <LogOut size={13} /> Sair
-          </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 100, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)" }}>
+              <span className="dot-pulse" style={{ width: 7, height: 7, borderRadius: "50%", background: "#10B981", display: "block" }} />
+              <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#34D399", letterSpacing: "0.04em" }}>ONLINE</span>
+            </div>
+
+            <button onClick={() => supabase.auth.signOut()} className="btn-ghost"
+              style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 100, fontSize: "0.82rem", fontWeight: 500 }}>
+              <LogOut size={13} /> Sair
+            </button>
+          </div>
         </div>
 
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 28px", display: "flex", gap: 2, position: "relative", zIndex: 1, overflowX: "auto" }}>
@@ -236,8 +391,8 @@ export default function PainelAdmin() {
       <main style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 28px 80px", position: "relative", zIndex: 1 }}>
         {tab === "pedidos"      && <AbaPedidos />}
         {tab === "produtos"     && <AbaProdutos />}
-        {tab === "funcionarios" && <AbaFuncionarios />}
-        {tab === "chat"         && <AbaChat session={session} />}
+        {tab === "equipe"       && <AbaEquipe />}
+        {tab === "chat"         && <AbaChat session={session} attendantName={attendant.name} />}
       </main>
     </div>
   );
@@ -891,108 +1046,217 @@ function ObsToggle({ product, onSave }) {
 /* ═══════════════════════════════════════════════
    ABA FUNCIONÁRIOS
    ═══════════════════════════════════════════════ */
-function AbaFuncionarios() {
-  const [funcionarios, setFuncionarios] = useState([]);
-  const [nome, setNome] = useState("");
-  const [copiado, setCopiado] = useState(null);
+/* ═══════════════════════════════════════════════
+   ABA EQUIPE - Gerenciar atendentes
+   ═══════════════════════════════════════════════ */
+function AbaEquipe() {
+  const [team, setTeam] = useState(getAttendants);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formName, setFormName] = useState("");
+  const [formEmoji, setFormEmoji] = useState("👨‍💼");
+  const [formColor, setFormColor] = useState("#6366F1");
 
-  const carregar = async () => {
-    const { data } = await supabase.from("employees").select("*").order("created_at");
-    setFuncionarios(data || []);
+  useEffect(() => { saveAttendants(team); }, [team]);
+
+  const resetForm = () => {
+    setFormName("");
+    setFormEmoji("👨‍💼");
+    setFormColor("#6366F1");
+    setEditingId(null);
+    setShowForm(false);
   };
-  useEffect(() => { carregar(); }, []);
 
-  const slugify = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  const openEdit = (att) => {
+    setFormName(att.name);
+    setFormEmoji(att.emoji);
+    setFormColor(att.color);
+    setEditingId(att.id);
+    setShowForm(true);
+  };
 
-  const adicionar = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    await supabase.from("employees").insert({ name: nome, slug: slugify(nome) });
-    setNome("");
-    carregar();
+    if (!formName.trim()) return;
+
+    if (editingId) {
+      setTeam(prev => prev.map(a => a.id === editingId ? { ...a, name: formName.trim(), emoji: formEmoji, color: formColor } : a));
+    } else {
+      const id = formName.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-") + "-" + Date.now();
+      setTeam(prev => [...prev, { id, name: formName.trim(), emoji: formEmoji, color: formColor }]);
+    }
+    resetForm();
   };
 
-  const remover = async (id) => {
-    if (!window.confirm("Remover este funcionário?")) return;
-    await supabase.from("employees").delete().eq("id", id);
-    carregar();
-  };
-
-  const copiarLink = (slug) => {
-    const link = `${window.location.origin.replace("/admin", "")}/?func=${slug}`;
-    navigator.clipboard.writeText(link);
-    setCopiado(slug);
-    setTimeout(() => setCopiado(null), 1800);
+  const removeAttendant = (id) => {
+    if (!window.confirm("Remover este membro da equipe?")) return;
+    setTeam(prev => prev.filter(a => a.id !== id));
   };
 
   return (
     <div className="animate-fade-up">
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h2 className="font-display" style={{ fontSize: "1.6rem", fontWeight: 700, color: "#F1F5F9", letterSpacing: "-0.02em", marginBottom: 4 }}>Funcionários</h2>
-          <p style={{ fontSize: "0.83rem", color: "#475569" }}>Gere links personalizados para cada atendente</p>
+          <h2 className="font-display" style={{ fontSize: "1.6rem", fontWeight: 700, color: "#F1F5F9", letterSpacing: "-0.02em", marginBottom: 4 }}>
+            Equipe
+          </h2>
+          <p style={{ fontSize: "0.83rem", color: "#475569" }}>Gerencie quem aparece na tela de seleção de atendente</p>
         </div>
+        <button onClick={() => { resetForm(); setShowForm(true); }} className="btn-primary" style={{
+          display: "flex", alignItems: "center", gap: 7, padding: "10px 20px", borderRadius: 12, fontSize: "0.85rem", fontWeight: 600
+        }}>
+          <Plus size={15} /> Novo membro
+        </button>
       </div>
 
-      <form onSubmit={adicionar} style={{ display: "flex", gap: 10, marginBottom: 28 }}>
-        <input required placeholder="Nome do funcionário" value={nome} onChange={(e) => setNome(e.target.value)}
-          className="input-dark" style={{ flex: 1, padding: "12px 16px", fontSize: "0.93rem", borderRadius: 13 }} />
-        <button type="submit" className="btn-primary"
-          style={{ display: "flex", alignItems: "center", gap: 7, padding: "12px 24px", borderRadius: 13, fontSize: "0.88rem", whiteSpace: "nowrap" }}>
-          <Plus size={15} /> Adicionar
-        </button>
-      </form>
+      {/* Form modal */}
+      {showForm && (
+        <div className="animate-fade-in" style={{
+          position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)",
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 24
+        }} onClick={(e) => { if (e.target === e.currentTarget) resetForm(); }}>
+          <div className="animate-scale-in" style={{
+            width: "100%", maxWidth: 420, background: "#0F1524", borderRadius: 20,
+            border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 24px 64px rgba(0,0,0,0.6)", overflow: "hidden"
+          }}>
+            <div style={{ padding: "24px 24px 0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#F1F5F9" }}>
+                  {editingId ? "Editar membro" : "Novo membro"}
+                </h3>
+                <button onClick={resetForm} style={{
+                  width: 32, height: 32, borderRadius: 8, background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.08)", color: "#64748B", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center"
+                }}><X size={14} /></button>
+              </div>
+            </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {funcionarios.map((f, i) => {
-          const link = `${window.location.origin.replace("/admin", "")}/?func=${f.slug}`;
-          const copied = copiado === f.slug;
-          const colors = ["#818CF8", "#34D399", "#FBBF24", "#F87171", "#C084FC"];
-          const accent = colors[i % colors.length];
-          return (
-            <div key={f.id} className="glass-card animate-fade-up" style={{ padding: "18px 22px", animationDelay: `${i * 0.05}s` }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 150 }}>
-                  <div style={{
-                    width: 42, height: 42, borderRadius: "50%", flexShrink: 0,
-                    background: `${accent}1A`, border: `1.5px solid ${accent}44`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "0.9rem", fontWeight: 700, color: accent
-                  }}>
-                    {f.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p style={{ fontWeight: 600, color: "#E2E8F0", fontSize: "0.95rem", marginBottom: 3 }}>{f.name}</p>
-                    <p className="font-mono" style={{ fontSize: "0.71rem", color: "#334155", wordBreak: "break-all" }}>{link}</p>
-                  </div>
+            <form onSubmit={handleSubmit} style={{ padding: "0 24px 24px" }}>
+              {/* Preview */}
+              <div style={{ textAlign: "center", marginBottom: 24 }}>
+                <div style={{
+                  width: 72, height: 72, borderRadius: "50%",
+                  background: `linear-gradient(135deg, ${formColor}33, ${formColor}15)`,
+                  border: `2px solid ${formColor}55`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  margin: "0 auto", fontSize: "2rem"
+                }}>
+                  {formEmoji}
                 </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={() => copiarLink(f.slug)}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 9,
-                      background: copied ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.05)",
-                      border: `1px solid ${copied ? "rgba(16,185,129,0.3)" : "rgba(255,255,255,0.09)"}`,
-                      color: copied ? "#34D399" : "#94A3B8",
-                      fontSize: "0.81rem", fontWeight: 500, cursor: "pointer", transition: "all .2s"
-                    }}>
-                    {copied ? <Check size={13} /> : <Link2 size={13} />}
-                    {copied ? "Copiado!" : "Copiar link"}
-                  </button>
-                  <button onClick={() => remover(f.id)}
-                    style={{ padding: "8px 10px", borderRadius: 9, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)", color: "#F87171", cursor: "pointer", display: "flex", transition: "all .18s" }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = "rgba(239,68,68,0.15)"}
-                    onMouseLeave={(e) => e.currentTarget.style.background = "rgba(239,68,68,0.08)"}>
-                    <Trash2 size={14} />
-                  </button>
+                <p style={{ color: "#E2E8F0", fontWeight: 600, fontSize: "0.95rem", marginTop: 10 }}>
+                  {formName || "Nome do membro"}
+                </p>
+              </div>
+
+              {/* Name */}
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: "block", fontSize: "0.73rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "#64748B", marginBottom: 8 }}>
+                  Nome
+                </label>
+                <input required value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="Ex: Gabriel"
+                  className="input-dark" style={{ padding: "12px 16px", fontSize: "0.93rem" }} />
+              </div>
+
+              {/* Emoji */}
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ display: "block", fontSize: "0.73rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "#64748B", marginBottom: 8 }}>
+                  Ícone
+                </label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {ATTENDANT_EMOJIS.map((em) => (
+                    <button key={em} type="button" onClick={() => setFormEmoji(em)} style={{
+                      width: 40, height: 40, borderRadius: 10, fontSize: "1.2rem",
+                      background: formEmoji === em ? "rgba(232,195,106,0.15)" : "rgba(255,255,255,0.04)",
+                      border: formEmoji === em ? "2px solid #E8C36A" : "1px solid rgba(255,255,255,0.08)",
+                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                      transition: "all 0.15s"
+                    }}>{em}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Color */}
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: "block", fontSize: "0.73rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", color: "#64748B", marginBottom: 8 }}>
+                  Cor
+                </label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {ATTENDANT_COLORS.map((c) => (
+                    <button key={c} type="button" onClick={() => setFormColor(c)} style={{
+                      width: 32, height: 32, borderRadius: "50%",
+                      background: c, border: formColor === c ? "3px solid #FFF" : "2px solid transparent",
+                      cursor: "pointer", transition: "all 0.15s",
+                      boxShadow: formColor === c ? `0 0 12px ${c}88` : "none"
+                    }} />
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <button type="button" onClick={resetForm} className="btn-ghost" style={{
+                  flex: 1, padding: "12px", borderRadius: 12, fontSize: "0.88rem", fontWeight: 500
+                }}>Cancelar</button>
+                <button type="submit" className="btn-primary" style={{
+                  flex: 1, padding: "12px", borderRadius: 12, fontSize: "0.88rem", fontWeight: 600
+                }}>{editingId ? "Salvar" : "Adicionar"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Team list */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {team.map((att, i) => (
+          <div key={att.id} className="glass-card animate-fade-up" style={{
+            padding: "16px 20px", animationDelay: `${i * 0.04}s`,
+            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
+                background: `linear-gradient(135deg, ${att.color}33, ${att.color}15)`,
+                border: `2px solid ${att.color}55`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "1.2rem"
+              }}>
+                {att.emoji}
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ fontWeight: 600, color: "#E2E8F0", fontSize: "0.95rem" }}>{att.name}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: "50%", background: att.color, display: "inline-block" }} />
+                  <span style={{ fontSize: "0.72rem", color: "#475569" }}>{att.color}</span>
                 </div>
               </div>
             </div>
-          );
-        })}
+            <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+              <button onClick={() => openEdit(att)} style={{
+                padding: "8px 14px", borderRadius: 9,
+                background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)",
+                color: "#94A3B8", cursor: "pointer", display: "flex", alignItems: "center", gap: 5,
+                fontSize: "0.81rem", fontWeight: 500, transition: "all .18s"
+              }}>
+                <Edit3 size={13} /> Editar
+              </button>
+              <button onClick={() => removeAttendant(att.id)} style={{
+                padding: "8px 10px", borderRadius: 9,
+                background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)",
+                color: "#F87171", cursor: "pointer", display: "flex", transition: "all .18s"
+              }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(239,68,68,0.15)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "rgba(239,68,68,0.08)"}>
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
 
-        {funcionarios.length === 0 && (
+        {team.length === 0 && (
           <div style={{ textAlign: "center", padding: "60px 0" }}>
-            <Users size={32} color="#1E293B" style={{ margin: "0 auto 12px", display: "block" }} />
-            <p style={{ color: "#334155", fontSize: "0.9rem" }}>Nenhum funcionário cadastrado ainda.</p>
+            <Users size={36} color="#1E293B" style={{ margin: "0 auto 12px", display: "block" }} />
+            <p style={{ color: "#334155", fontSize: "0.92rem", fontWeight: 500 }}>Nenhum membro na equipe</p>
+            <p style={{ color: "#1E293B", fontSize: "0.82rem", marginTop: 6 }}>Clique em "Novo membro" para adicionar</p>
           </div>
         )}
       </div>
@@ -1003,7 +1267,7 @@ function AbaFuncionarios() {
 /* ═══════════════════════════════════════════════
    ABA CHAT - Reescrita do zero
    ═══════════════════════════════════════════════ */
-function AbaChat({ session }) {
+function AbaChat({ session, attendantName }) {
   const [customerChats, setCustomerChats] = useState([]);
   const [selectedPhone, setSelectedPhone] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -1011,10 +1275,7 @@ function AbaChat({ session }) {
   const [sending, setSending] = useState(false);
   const chatEndRef = useRef(null);
 
-  const employeeName = session?.user?.user_metadata?.full_name
-    || session?.user?.user_metadata?.name
-    || session?.user?.email?.split("@")[0]
-    || "Atendente";
+  const employeeName = attendantName || "Atendente";
 
   const loadCustomerChats = useCallback(async () => {
     const { data: allMsgs } = await supabase
