@@ -37,11 +37,17 @@ function FloatingParticles() {
 }
 
 const getCustomerData = () => {
-  try { return JSON.parse(localStorage.getItem("padaria_customer") || "null"); }
-  catch { return null; }
+  try {
+    const raw = localStorage.getItem("padaria_customer");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") return parsed;
+    }
+  } catch {}
+  return null;
 };
 const saveCustomerData = (data) => {
-  localStorage.setItem("padaria_customer", JSON.stringify(data));
+  try { localStorage.setItem("padaria_customer", JSON.stringify(data)); } catch {}
 };
 
 function GoogleIcon({ size = 20 }) {

@@ -177,18 +177,24 @@ const ATTENDANT_EMOJIS = [
 function getAttendants() {
   try {
     const saved = localStorage.getItem("padaria_team");
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
   } catch {}
   return [...DEFAULT_ATTENDANTS];
 }
 
 function saveAttendants(list) {
-  localStorage.setItem("padaria_team", JSON.stringify(list));
+  try { localStorage.setItem("padaria_team", JSON.stringify(list)); } catch {}
 }
 
 function getSavedAttendant() {
-  try { return localStorage.getItem("padaria_attendant") || null; }
-  catch { return null; }
+  try {
+    const id = localStorage.getItem("padaria_attendant");
+    if (id && typeof id === "string") return id;
+  } catch {}
+  return null;
 }
 
 function TelaSelecaoAtendente({ onSelect }) {
@@ -277,7 +283,9 @@ export default function PainelAdmin() {
   const [tab, setTab] = useState("pedidos");
   const [attendant, setAttendant] = useState(() => {
     const saved = getSavedAttendant();
-    return saved ? ATTENDANTS.find(a => a.id === saved) || null : null;
+    if (!saved) return null;
+    const team = getAttendants();
+    return team.find(a => a.id === saved) || null;
   });
 
   useEffect(() => {
