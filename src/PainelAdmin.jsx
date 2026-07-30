@@ -1367,6 +1367,15 @@ function AbaChat({ session, attendantName }) {
     await loadCustomerChats();
   };
 
+  const deleteMessage = async (msgId) => {
+    const { error } = await supabase.from("chat_messages").delete().eq("id", msgId);
+    if (error) console.error("Erro ao apagar mensagem:", error);
+    else {
+      setMessages((prev) => prev.filter((m) => m.id !== msgId));
+      await loadCustomerChats();
+    }
+  };
+
   const formatTime = (ts) => new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   const formatDate = (ts) => {
     const d = new Date(ts);
@@ -1487,7 +1496,7 @@ function AbaChat({ session, attendantName }) {
                   </div>
                 )}
                 {messages.map((msg) => (
-                  <div key={msg.id} style={{ display: "flex", justifyContent: msg.sender === "seller" ? "flex-end" : "flex-start" }}>
+                  <div key={msg.id} style={{ display: "flex", justifyContent: msg.sender === "seller" ? "flex-end" : "flex-start", alignItems: "flex-end", gap: 6 }}>
                     <div style={{
                       maxWidth: "72%", padding: "10px 14px", borderRadius: 16,
                       background: msg.sender === "seller"
@@ -1500,6 +1509,12 @@ function AbaChat({ session, attendantName }) {
                       <p style={{ fontSize: "0.88rem", lineHeight: 1.5 }}>{msg.message}</p>
                       <p style={{ fontSize: "0.66rem", marginTop: 4, opacity: 0.4 }}>{formatTime(msg.created_at)}</p>
                     </div>
+                    <button onClick={() => deleteMessage(msg.id)} title="Apagar mensagem" style={{
+                      width: 26, height: 26, borderRadius: "50%", border: "none", cursor: "pointer",
+                      background: "rgba(239,68,68,0.15)", color: "#EF4444",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      flexShrink: 0, fontSize: "0.75rem", opacity: 0.5, transition: "opacity 0.2s"
+                    }} onMouseEnter={(e) => e.currentTarget.style.opacity = 1} onMouseLeave={(e) => e.currentTarget.style.opacity = 0.5}>✕</button>
                   </div>
                 ))}
                 <div ref={chatEndRef} />

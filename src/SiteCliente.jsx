@@ -1256,6 +1256,12 @@ function ChatPanel({ customerName, customerPhone }) {
     await loadMessages();
   };
 
+  const deleteMessage = async (msgId) => {
+    const { error } = await supabase.from("chat_messages").delete().eq("id", msgId);
+    if (error) console.error("Erro ao apagar mensagem:", error);
+    else setMessages((prev) => prev.filter((m) => m.id !== msgId));
+  };
+
   if (!customerPhone) {
     return (
       <div className="text-center py-16">
@@ -1296,7 +1302,15 @@ function ChatPanel({ customerName, customerPhone }) {
           </div>
         )}
         {messages.map((msg) => (
-          <div key={msg.id} style={{ display: "flex", justifyContent: msg.sender === "customer" ? "flex-end" : "flex-start" }}>
+          <div key={msg.id} style={{ display: "flex", justifyContent: msg.sender === "customer" ? "flex-end" : "flex-start", alignItems: "flex-end", gap: 6 }}>
+            {msg.sender === "customer" && (
+              <button onClick={() => deleteMessage(msg.id)} title="Apagar mensagem" style={{
+                width: 24, height: 24, borderRadius: "50%", border: "none", cursor: "pointer",
+                background: "rgba(239,68,68,0.1)", color: "#EF4444",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0, fontSize: "0.7rem", opacity: 0.4, transition: "opacity 0.2s"
+              }} onMouseEnter={(e) => e.currentTarget.style.opacity = 1} onMouseLeave={(e) => e.currentTarget.style.opacity = 0.4}>✕</button>
+            )}
             <div style={{
               maxWidth: "78%", padding: "10px 14px", borderRadius: 16,
               background: msg.sender === "customer"

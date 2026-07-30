@@ -85,6 +85,20 @@ CREATE POLICY "authenticated pode enviar mensagem" ON chat_messages FOR INSERT T
 CREATE POLICY "anon pode ler mensagens" ON chat_messages FOR SELECT TO anon USING (true);
 CREATE POLICY "authenticated pode ler mensagens" ON chat_messages FOR SELECT TO authenticated USING (true);
 
+-- DELETE: admin pode apagar qualquer mensagem
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "authenticated pode apagar mensagens" ON chat_messages;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+CREATE POLICY "authenticated pode apagar mensagens" ON chat_messages FOR DELETE TO authenticated USING (true);
+
+-- DELETE: cliente pode apagar suas próprias mensagens
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "anon pode apagar suas mensagens" ON chat_messages;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+CREATE POLICY "anon pode apagar suas mensagens" ON chat_messages FOR DELETE TO anon USING (sender = 'customer');
+
 -- 5) Garantir Realtime para chat_messages
 DO $$ BEGIN
   ALTER PUBLICATION supabase_realtime ADD TABLE chat_messages;
