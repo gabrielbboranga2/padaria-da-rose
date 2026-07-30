@@ -188,7 +188,17 @@ export default function SiteCliente() {
 
     supabase.from("products").select("*").order("category").then(({ data, error }) => {
       setLoading(false);
-      if (!error) setProducts(data || []);
+      if (error) {
+        console.error("[Padaria] Erro ao carregar produtos:", error.message);
+        setConnectionOk(false);
+      } else {
+        setProducts(data || []);
+        setConnectionOk(true);
+      }
+    }).catch((err) => {
+      console.error("[Padaria] Falha na conexão com Supabase:", err);
+      setLoading(false);
+      setConnectionOk(false);
     });
 
     return () => subscription?.unsubscribe();
@@ -255,8 +265,13 @@ export default function SiteCliente() {
   const loadMyOrders = async () => {
     if (!customer.telefone) return;
     setLoadingOrders(true);
-    const { data } = await supabase.from("orders").select("*").eq("customer_phone", customer.telefone).order("created_at", { ascending: false });
-    setMyOrders(data || []);
+    const { data, error } = await supabase.from("orders").select("*").eq("customer_phone", customer.telefone).order("created_at", { ascending: false });
+    if (error) {
+      console.error("[Padaria] Erro ao carregar pedidos:", error.message);
+      setMyOrders([]);
+    } else {
+      setMyOrders(data || []);
+    }
     setLoadingOrders(false);
   };
 
