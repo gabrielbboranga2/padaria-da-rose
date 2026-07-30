@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { Wheat, Flame, Cookie, Plus, Minus, Phone, Clock, X, Check, ShoppingBag, AlertTriangle, Copy, Sparkles, Send, MessageCircle, User, LogIn, LogOut, ChevronDown, Shield, Package, ArrowLeft } from "lucide-react";
+import { Wheat, Flame, Cookie, Plus, Minus, Phone, Clock, X, Check, ShoppingBag, AlertTriangle, Copy, Sparkles, Send, MessageCircle, User, LogIn, LogOut, ChevronDown, Shield, Package, ArrowLeft, RefreshCw } from "lucide-react";
 import { supabase } from "./lib/supabaseClient";
 
 const CATEGORIES = [
