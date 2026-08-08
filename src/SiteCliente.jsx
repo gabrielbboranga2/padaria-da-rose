@@ -289,11 +289,47 @@ export default function SiteCliente() {
     }));
     const allNotes = cartItems.filter((i) => i.obs).map((i) => `${i.name}: ${i.obs}`).join("; ");
 
-    const { data: orderResult, error } = await supabase.rpc("create_order", {
+    let orderResult = null;
+    let error = null;
+
+    const { data: rpcData, error: rpcError } = await supabase.rpc("create_order", {
       p_customer_name: customer.nome, p_customer_phone: customer.telefone,
       p_pickup_time: customer.retirada, p_notes: allNotes || null,
       p_employee_slug: employeeSlug, p_total: total, p_items: items,
     });
+
+    if (rpcError) {
+      console.warn("[Padaria] create_order RPC falhou, tentando insert direto:", rpcError.message);
+      const { data: insertData, error: insertError } = await supabase
+        .from("orders")
+        .insert({
+          customer_name: customer.nome,
+          customer_phone: customer.telefone,
+          pickup_time: customer.retirada,
+          notes: allNotes || null,
+          employee_slug: employeeSlug,
+          total: total,
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        error = insertError;
+      } else {
+        for (const item of items) {
+          await supabase.from("order_items").insert({
+            order_id: insertData.id,
+            product_name: item.product_name,
+            qty: item.qty,
+            unit_price: item.unit_price,
+            observation: item.observation || "",
+          });
+        }
+        orderResult = insertData;
+      }
+    } else {
+      orderResult = rpcData;
+    }
 
     if (error) {
       const fallback = {
@@ -309,7 +345,7 @@ export default function SiteCliente() {
       return;
     }
 
-    const orderId = Array.isArray(orderResult) ? orderResult[0]?.create_order?.id || orderResult[0]?.id : orderResult?.id || orderResult;
+    const orderId = orderResult?.id || (Array.isArray(orderResult) ? orderResult[0]?.id : orderResult);
     setOrderNumber(orderId);
     setStep("enviado");
   };
