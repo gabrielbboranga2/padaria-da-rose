@@ -1306,6 +1306,7 @@ function AbaChat({ session, attendantName }) {
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
   const chatEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
   const employeeName = attendantName || "Atendente";
 
@@ -1371,7 +1372,9 @@ function AbaChat({ session, attendantName }) {
   }, [selectedPhone, loadMessages]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   const sendMessage = async () => {
@@ -1513,7 +1516,7 @@ function AbaChat({ session, attendantName }) {
               </div>
 
               {/* Messages */}
-              <div style={{ flex: 1, maxHeight: 380, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 10, background: "rgba(0,0,0,0.15)" }}>
+              <div ref={chatContainerRef} style={{ flex: 1, maxHeight: 380, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 10, background: "rgba(0,0,0,0.15)" }}>
                 {messages.length === 0 && (
                   <div style={{ textAlign: "center", padding: "40px 20px" }}>
                     <p style={{ color: "#475569", fontSize: "0.88rem" }}>Nenhuma mensagem ainda</p>

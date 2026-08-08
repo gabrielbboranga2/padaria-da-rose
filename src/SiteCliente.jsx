@@ -1268,6 +1268,7 @@ function ChatPanel({ customerName, customerPhone }) {
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
   const chatEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
   const chatSlug = customerPhone || null;
 
   const loadMessages = useCallback(async () => {
@@ -1289,7 +1290,9 @@ function ChatPanel({ customerName, customerPhone }) {
   }, [chatSlug, loadMessages]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   const sendMessage = async () => {
@@ -1342,7 +1345,7 @@ function ChatPanel({ customerName, customerPhone }) {
       </div>
 
       {/* Messages */}
-      <div style={{
+      <div ref={chatContainerRef} style={{
         height: 360, overflowY: "auto", padding: "16px 18px",
         display: "flex", flexDirection: "column", gap: 10,
         background: "#F0FFF4"
