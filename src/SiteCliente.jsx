@@ -269,9 +269,10 @@ export default function SiteCliente() {
   };
 
   const loadMyOrders = async () => {
-    if (!customer.telefone) return;
+    const identifier = customer.telefone || customer.email;
+    if (!identifier) return;
     setLoadingOrders(true);
-    const { data, error } = await supabase.rpc("get_customer_orders", { p_phone: customer.telefone });
+    const { data, error } = await supabase.rpc("get_customer_orders", { p_phone: identifier });
     if (error) {
       console.error("[Padaria] Erro ao carregar pedidos:", error.message);
       setMyOrders([]);
@@ -282,8 +283,8 @@ export default function SiteCliente() {
   };
 
   useEffect(() => {
-    if (step === "conta" && customer.telefone) loadMyOrders();
-  }, [step, customer.telefone]);
+    if (step === "conta" && (customer.telefone || customer.email)) loadMyOrders();
+  }, [step, customer.telefone, customer.email]);
 
   const submitOrder = async (e) => {
     e.preventDefault();
@@ -903,7 +904,7 @@ export default function SiteCliente() {
           {/* Orders tab */}
           {accountTab === "pedidos" && (
             <div>
-              {!customer.telefone ? (
+              {!customer.telefone && !customer.email ? (
                 <div className="text-center py-16">
                   <User size={48} color="#D4B896" style={{ margin: "0 auto 16px", opacity: 0.4 }} />
                   <p style={{ color: "#7A6B5D", fontSize: "1rem", fontWeight: 600 }}>Faça login para ver seus pedidos</p>
