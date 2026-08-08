@@ -988,7 +988,7 @@ export default function SiteCliente() {
 
           {/* Chat tab */}
           {accountTab === "chat" && (
-            <ChatPanel customerName={customer.nome} customerPhone={customer.telefone} />
+            <ChatPanel customerName={customer.nome} customerPhone={customer.telefone || customer.email} />
           )}
         </main>
       )}
