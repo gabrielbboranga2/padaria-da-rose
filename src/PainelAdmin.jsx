@@ -140,17 +140,18 @@ const GLOBAL_CSS = `
   }
 
   @media print {
+    @page { size: 80mm auto; margin: 0; }
     body * { visibility: hidden !important; }
     .comanda-print, .comanda-print * { visibility: visible !important; }
     .comanda-print {
       position: fixed; top: 0; left: 0;
       width: 80mm; font-family: monospace;
-      font-size: 14px; line-height: 1.4;
+      font-size: 16px; line-height: 1.5;
       color: #000; background: #fff;
-      padding: 0; margin: 0; display: block !important;
+      padding: 2mm; margin: 0; display: block !important;
     }
-    .comanda-print p { margin: 3px 0; white-space: pre-wrap; }
-    .comanda-print .divider { border-top: 1px dashed #000; margin: 8px 0; }
+    .comanda-print p { margin: 4px 0; white-space: pre-wrap; }
+    .comanda-print .divider { border-top: 1px dashed #000; margin: 10px 0; }
   }
 `;
 
@@ -551,7 +552,10 @@ function AbaPedidos() {
 
   useEffect(() => {
     if (pedidoParaImprimir) {
-      setTimeout(() => { window.print(); setTimeout(() => setPedidoParaImprimir(null), 1000); }, 300);
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => setPedidoParaImprimir(null), 1000);
+      }, 300);
     }
   }, [pedidoParaImprimir]);
 
@@ -761,25 +765,25 @@ function AbaPedidos() {
       {pedidoImpresso && (
         <div ref={printRef} className="comanda-print">
           <div style={{ padding: "4mm" }}>
-            <p style={{ textAlign: "center", fontWeight: 700, fontSize: "18px", marginBottom: 2 }}>RETIRADA: {pedidoImpresso.pickup_time || "-"}</p>
+            <p style={{ textAlign: "center", fontWeight: 700, fontSize: "20px", marginBottom: 2 }}>RETIRADA: {pedidoImpresso.pickup_time || "-"}</p>
             <div className="divider" />
-            <p style={{ textAlign: "center", fontWeight: 700, fontSize: "16px" }}>PADARIA DA ROSE</p>
-            <p style={{ textAlign: "center", fontSize: "12px" }}>Pedido #{pedidoImpresso.id}</p>
-            <p style={{ textAlign: "center", fontSize: "12px" }}>{new Date(pedidoImpresso.created_at).toLocaleString("pt-BR")}</p>
+            <p style={{ textAlign: "center", fontWeight: 700, fontSize: "18px" }}>PADARIA DA ROSE</p>
+            <p style={{ textAlign: "center", fontSize: "14px" }}>Pedido #{pedidoImpresso.id}</p>
+            <p style={{ textAlign: "center", fontSize: "14px" }}>{new Date(pedidoImpresso.created_at).toLocaleString("pt-BR")}</p>
             <div className="divider" />
-            <p style={{ fontWeight: 600, fontSize: "14px" }}>{pedidoImpresso.customer_name}</p>
-            <p style={{ fontSize: "14px" }}>{pedidoImpresso.customer_phone}</p>
-            {pedidoImpresso.employee_slug && <p style={{ fontSize: "13px" }}>Via: {pedidoImpresso.employee_slug}</p>}
+            <p style={{ fontWeight: 600, fontSize: "16px" }}>{pedidoImpresso.customer_name}</p>
+            <p style={{ fontSize: "16px" }}>{pedidoImpresso.customer_phone}</p>
+            {pedidoImpresso.employee_slug && <p style={{ fontSize: "14px" }}>Via: {pedidoImpresso.employee_slug}</p>}
             <div className="divider" />
             {(pedidoImpresso.order_items || []).map((it) => (
-              <div key={it.id} style={{ marginBottom: 4 }}>
-                <p style={{ fontWeight: 600, fontSize: "14px" }}>{it.qty}x {it.product_name} — {money(it.unit_price * it.qty)}</p>
-                {it.observation && <p style={{ fontSize: "12px", fontStyle: "italic", paddingLeft: "4mm" }}>→ {it.observation}</p>}
+              <div key={it.id} style={{ marginBottom: 6 }}>
+                <p style={{ fontWeight: 600, fontSize: "16px" }}>{it.qty}x {it.product_name} — {money(it.unit_price * it.qty)}</p>
+                {it.observation && <p style={{ fontSize: "14px", fontStyle: "italic", paddingLeft: "4mm" }}>→ {it.observation}</p>}
               </div>
             ))}
             <div className="divider" />
-            <p style={{ fontWeight: 700, fontSize: "16px" }}>TOTAL: {money(pedidoImpresso.total)}</p>
-            {pedidoImpresso.notes && <p style={{ fontSize: "12px", fontStyle: "italic" }}>Obs: {pedidoImpresso.notes}</p>}
+            <p style={{ fontWeight: 700, fontSize: "18px" }}>TOTAL: {money(pedidoImpresso.total)}</p>
+            {pedidoImpresso.notes && <p style={{ fontSize: "14px", fontStyle: "italic" }}>Obs: {pedidoImpresso.notes}</p>}
             <div style={{ height: "10mm" }} />
           </div>
         </div>
@@ -793,7 +797,7 @@ function AbaPedidos() {
    ═══════════════════════════════════════════════ */
 function AbaProdutos() {
   const [produtos, setProdutos] = useState([]);
-  const [novo, setNovo] = useState({ name: "", description: "", price: "", unit: "unid.", category: "paes", has_obs: false, obs_label: "Observação" });
+  const [novo, setNovo] = useState({ name: "", description: "", price: "", unit: "unid.", category: "paes", has_obs: false, obs_label: "Observação", image_url: "" });
   const [formOpen, setFormOpen] = useState(false);
 
   const carregar = async () => {
@@ -806,9 +810,10 @@ function AbaProdutos() {
     e.preventDefault();
     await supabase.from("products").insert({
       name: novo.name, description: novo.description, price: Number(novo.price),
-      unit: novo.unit, category: novo.category, has_obs: novo.has_obs, obs_label: novo.obs_label
+      unit: novo.unit, category: novo.category, has_obs: novo.has_obs, obs_label: novo.obs_label,
+      image_url: novo.image_url || null
     });
-    setNovo({ name: "", description: "", price: "", unit: "unid.", category: "paes", has_obs: false, obs_label: "Observação" });
+    setNovo({ name: "", description: "", price: "", unit: "unid.", category: "paes", has_obs: false, obs_label: "Observação", image_url: "" });
     setFormOpen(false);
     carregar();
   };
@@ -830,6 +835,11 @@ function AbaProdutos() {
 
   const atualizarObs = async (id, hasObs, obsLabel) => {
     await supabase.from("products").update({ has_obs: hasObs, obs_label: obsLabel }).eq("id", id);
+  };
+
+  const atualizarFoto = async (id, imageUrl) => {
+    await supabase.from("products").update({ image_url: imageUrl || null }).eq("id", id);
+    carregar();
   };
 
   const catLabel = { paes: "Pães", domingo: "Domingo", bolos: "Bolos & Doces" };
@@ -882,6 +892,11 @@ function AbaProdutos() {
                 onChange={(e) => setNovo({ ...novo, unit: e.target.value })}
                 className="input-dark" style={{ padding: "11px 14px", fontSize: "0.9rem" }} />
             </div>
+            <div style={{ marginBottom: 12 }}>
+              <input placeholder="URL da foto (opcional)" value={novo.image_url}
+                onChange={(e) => setNovo({ ...novo, image_url: e.target.value })}
+                className="input-dark" style={{ padding: "11px 14px", fontSize: "0.9rem" }} />
+            </div>
 
             {/* Observação do produto */}
             <div style={{ 
@@ -923,8 +938,8 @@ function AbaProdutos() {
 
       {/* Table */}
       <div style={{ background: "linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 18, overflow: "hidden" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 100px 80px 1fr auto", gap: 0, padding: "13px 22px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
-          {["Nome", "Categoria", "Preço", "Unidade", "Obs", "Status", ""].map((h) => (
+        <div style={{ display: "grid", gridTemplateColumns: "60px 2fr 1fr 1fr 100px 80px 1fr auto", gap: 0, padding: "13px 22px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
+          {["Foto", "Nome", "Categoria", "Preço", "Unidade", "Obs", "Status", ""].map((h) => (
             <span key={h} style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#334155" }}>{h}</span>
           ))}
         </div>
@@ -933,13 +948,24 @@ function AbaProdutos() {
           const cs = catStyles[p.category] || catStyles.paes;
           return (
             <div key={p.id} style={{
-              display: "grid", gridTemplateColumns: "2fr 1fr 1fr 100px 80px 1fr auto",
+              display: "grid", gridTemplateColumns: "60px 2fr 1fr 1fr 100px 80px 1fr auto",
               gap: 0, padding: "15px 22px", alignItems: "center",
               borderBottom: i < produtos.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
               transition: "background .2s",
             }}
               onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
               onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+              <div style={{ width: 48, height: 48, borderRadius: 10, overflow: "hidden", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                onClick={() => {
+                  const url = prompt("URL da foto do produto:", p.image_url || "");
+                  if (url !== null) atualizarFoto(p.id, url);
+                }}>
+                {p.image_url ? (
+                  <img src={p.image_url} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <Package size={18} color="#334155" />
+                )}
+              </div>
               <div>
                 <p style={{ fontWeight: 600, color: "#E2E8F0", fontSize: "0.92rem" }}>{p.name}</p>
                 {p.description && <p style={{ fontSize: "0.74rem", color: "#334155", marginTop: 2 }}>{p.description}</p>}

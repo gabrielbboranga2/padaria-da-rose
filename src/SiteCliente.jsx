@@ -265,7 +265,7 @@ export default function SiteCliente() {
   const loadMyOrders = async () => {
     if (!customer.telefone) return;
     setLoadingOrders(true);
-    const { data, error } = await supabase.from("orders").select("*").eq("customer_phone", customer.telefone).order("created_at", { ascending: false });
+    const { data, error } = await supabase.rpc("get_customer_orders", { p_phone: customer.telefone });
     if (error) {
       console.error("[Padaria] Erro ao carregar pedidos:", error.message);
       setMyOrders([]);
@@ -584,6 +584,11 @@ export default function SiteCliente() {
                     height: 5, background: p.available ? "linear-gradient(90deg, #F59E0B, #EF4444, #8B5CF6, #F59E0B)" : "#E8E0D8",
                     backgroundSize: "200% 100%", animation: p.available ? "shimmer 4s linear infinite" : "none"
                   }} />
+                  {p.image_url && (
+                    <div style={{ height: 160, overflow: "hidden", background: "#FFF8F0" }}>
+                      <img src={p.image_url} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                  )}
                   <div style={{ padding: "24px 24px 22px" }}>
                     <div className="flex items-start justify-between gap-2">
                       <div style={{ flex: 1 }}>

@@ -79,11 +79,14 @@ create table orders (
 
 alter table orders enable row level security;
 
--- qualquer cliente pode CRIAR um pedido (mas não ler os pedidos de outros)
+-- qualquer cliente pode CRIAR um pedido
 create policy "clientes podem criar pedidos"
   on orders for insert
   to anon
   with check (true);
+
+-- cliente pode VER seus próprios pedidos (pelo telefone)
+-- (a política acima é aplicada via RPC get_customer_orders abaixo)
 
 -- admin logado também pode criar pedidos (caso a sessão esteja ativa no browser)
 create policy "authenticated pode criar pedidos"
@@ -201,6 +204,70 @@ insert into products (name, description, price, unit, category, available, has_o
   ('Porco assado', 'Somente aos domingos', 48.00, 'kg', 'domingo', true, true, 'Como deseja o porco?'),
   ('Bolo de chocolate', 'Fatia generosa ou bolo inteiro', 8.00, 'fatia', 'bolos', true, true, 'Fatia ou bolo inteiro?'),
   ('Docinhos variados', 'Brigadeiro, beijinho e cajuzinho — caixa com 12', 18.00, 'caixa', 'bolos', true, false, 'Observação');
+
+-- ============================================================
+-- RPC: Criar pedido (bypassa RLS com SECURITY DEFINER)
+-- ============================================================
+create or replace function create_order(
+  p_customer_name text,
+  p_customer_phone text,
+  p_pickup_time text,
+  p_notes text,
+  p_employee_slug text,
+  p_total numeric,
+  p_items jsonb
+)
+returns json
+language plpgsql
+security definer
+as $$
+declare
+  v_order_id bigint;
+  v_item jsonb;
+begin
+  insert into orders (customer_name, customer_phone, pickup_time, notes, employee_slug, total)
+  values (p_customer_name, p_customer_phone, p_pickup_time, p_notes, p_employee_slug, p_total)
+  returning id into v_order_id;
+
+  for v_item in select * from jsonb_array_elements(p_items)
+  loop
+    insert into order_items (order_id, product_name, qty, unit_price, observation)
+    values (
+      v_order_id,
+      v_item->>'product_name',
+      (v_item->>'qty')::int,
+      (v_item->>'unit_price')::numeric,
+      v_item->>'observation'
+    );
+  end loop;
+
+  return json_build_object('id', v_order_id);
+end;
+$$;
+
+-- ============================================================
+-- RPC: Buscar pedidos de um cliente (bypassa RLS)
+-- ============================================================
+create or replace function get_customer_orders(p_phone text)
+returns setof orders
+language sql
+security definer
+as $$
+  select * from orders where customer_phone = p_phone order by created_at desc;
+$$;
+
+-- ============================================================
+-- RPC: Resetar sequência de pedidos
+-- ============================================================
+create or replace function reset_order_sequence()
+returns void
+language sql
+security definer
+as $$
+  -- Não é possível resetar identity sequence diretamente sem superuser
+  -- Mas podemos truncar as tabelas
+  truncate orders restart identity cascade;
+$$;
 
 -- ============================================================
 -- DEPOIS DE RODAR ESTE ARQUIVO:
