@@ -141,17 +141,18 @@ const GLOBAL_CSS = `
 
   @media print {
     @page { size: 80mm auto; margin: 0; }
-    body * { visibility: hidden !important; }
-    .comanda-print, .comanda-print * { visibility: visible !important; }
+    body { margin: 0; padding: 0; background: #fff; }
+    body > *:not(.comanda-print) { display: none !important; }
     .comanda-print {
       position: fixed; top: 0; left: 0;
       width: 80mm; font-family: monospace;
-      font-size: 16px; line-height: 1.5;
+      font-size: 14px; line-height: 1.4;
       color: #000; background: #fff;
-      padding: 2mm; margin: 0; display: block !important;
+      padding: 2mm 3mm; margin: 0;
+      display: block !important;
     }
-    .comanda-print p { margin: 4px 0; white-space: pre-wrap; }
-    .comanda-print .divider { border-top: 1px dashed #000; margin: 10px 0; }
+    .comanda-print p { margin: 2px 0; white-space: pre-wrap; }
+    .comanda-print .divider { border-top: 1px dashed #000; margin: 6px 0; }
   }
 `;
 
@@ -764,28 +765,25 @@ function AbaPedidos() {
       {/* Print area — formatted for TANCA TP-550 (80mm) */}
       {pedidoImpresso && (
         <div ref={printRef} className="comanda-print">
-          <div style={{ padding: "4mm" }}>
-            <p style={{ textAlign: "center", fontWeight: 700, fontSize: "20px", marginBottom: 2 }}>RETIRADA: {pedidoImpresso.pickup_time || "-"}</p>
-            <div className="divider" />
-            <p style={{ textAlign: "center", fontWeight: 700, fontSize: "18px" }}>PADARIA DA ROSE</p>
-            <p style={{ textAlign: "center", fontSize: "14px" }}>Pedido #{pedidoImpresso.id}</p>
-            <p style={{ textAlign: "center", fontSize: "14px" }}>{new Date(pedidoImpresso.created_at).toLocaleString("pt-BR")}</p>
-            <div className="divider" />
-            <p style={{ fontWeight: 600, fontSize: "16px" }}>{pedidoImpresso.customer_name}</p>
-            <p style={{ fontSize: "16px" }}>{pedidoImpresso.customer_phone}</p>
-            {pedidoImpresso.employee_slug && <p style={{ fontSize: "14px" }}>Via: {pedidoImpresso.employee_slug}</p>}
-            <div className="divider" />
-            {(pedidoImpresso.order_items || []).map((it) => (
-              <div key={it.id} style={{ marginBottom: 6 }}>
-                <p style={{ fontWeight: 600, fontSize: "16px" }}>{it.qty}x {it.product_name} — {money(it.unit_price * it.qty)}</p>
-                {it.observation && <p style={{ fontSize: "14px", fontStyle: "italic", paddingLeft: "4mm" }}>→ {it.observation}</p>}
-              </div>
-            ))}
-            <div className="divider" />
-            <p style={{ fontWeight: 700, fontSize: "18px" }}>TOTAL: {money(pedidoImpresso.total)}</p>
-            {pedidoImpresso.notes && <p style={{ fontSize: "14px", fontStyle: "italic" }}>Obs: {pedidoImpresso.notes}</p>}
-            <div style={{ height: "10mm" }} />
-          </div>
+          <p style={{ textAlign: "center", fontWeight: 700, fontSize: "16px", marginBottom: 1 }}>RETIRADA: {pedidoImpresso.pickup_time || "-"}</p>
+          <div className="divider" />
+          <p style={{ textAlign: "center", fontWeight: 700, fontSize: "15px" }}>PADARIA DA ROSE</p>
+          <p style={{ textAlign: "center", fontSize: "12px" }}>Pedido #{pedidoImpresso.id}</p>
+          <p style={{ textAlign: "center", fontSize: "12px" }}>{new Date(pedidoImpresso.created_at).toLocaleString("pt-BR")}</p>
+          <div className="divider" />
+          <p style={{ fontWeight: 600, fontSize: "13px" }}>{pedidoImpresso.customer_name}</p>
+          <p style={{ fontSize: "13px" }}>{pedidoImpresso.customer_phone}</p>
+          {pedidoImpresso.employee_slug && <p style={{ fontSize: "11px" }}>Via: {pedidoImpresso.employee_slug}</p>}
+          <div className="divider" />
+          {(pedidoImpresso.order_items || []).map((it) => (
+            <div key={it.id} style={{ marginBottom: 2 }}>
+              <p style={{ fontWeight: 600, fontSize: "13px" }}>{it.qty}x {it.product_name} — {money(it.unit_price * it.qty)}</p>
+              {it.observation && <p style={{ fontSize: "11px", fontStyle: "italic", paddingLeft: "3mm" }}>→ {it.observation}</p>}
+            </div>
+          ))}
+          <div className="divider" />
+          <p style={{ fontWeight: 700, fontSize: "15px" }}>TOTAL: {money(pedidoImpresso.total)}</p>
+          {pedidoImpresso.notes && <p style={{ fontSize: "11px", fontStyle: "italic" }}>Obs: {pedidoImpresso.notes}</p>}
         </div>
       )}
     </div>

@@ -90,6 +90,7 @@ export default function SiteCliente() {
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [accountTab, setAccountTab] = useState("pedidos");
   const [chatOpen, setChatOpen] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState(null);
 
   const employeeSlug = useMemo(() => new URLSearchParams(window.location.search).get("func"), []);
 
@@ -155,14 +156,17 @@ export default function SiteCliente() {
         const meta = session.user.user_metadata || {};
         const nome = meta.full_name || meta.name || "";
         const email = session.user.email || "";
+        const avatar = meta.avatar_url || meta.picture || null;
         setCustomer(prev => ({ ...prev, nome: prev.nome || nome, email: email || prev.email }));
+        if (avatar) setPhotoUrl(avatar);
         setLoggedIn(true);
         setShowLoginModal(false);
-        saveCustomerData({ nome, telefone: customer.telefone, email });
+        saveCustomerData({ nome, telefone: customer.telefone, email, photoUrl: avatar || "" });
       } else {
         const saved = getCustomerData();
         if (saved) {
           setCustomer({ nome: saved.nome || "", telefone: saved.telefone || "", email: saved.email || "" });
+          if (saved.photoUrl) setPhotoUrl(saved.photoUrl);
           setLoggedIn(true);
         }
       }
@@ -175,10 +179,12 @@ export default function SiteCliente() {
         const meta = session.user.user_metadata || {};
         const nome = meta.full_name || meta.name || "";
         const email = session.user.email || "";
+        const avatar = meta.avatar_url || meta.picture || null;
         setCustomer(prev => ({ ...prev, nome: prev.nome || nome, email }));
+        if (avatar) setPhotoUrl(avatar);
         setLoggedIn(true);
         setShowLoginModal(false);
-        saveCustomerData({ nome, telefone: customer.telefone, email });
+        saveCustomerData({ nome, telefone: customer.telefone, email, photoUrl: avatar || "" });
         setSession(session);
       } else if (event === "SIGNED_OUT") {
         setSession(null);
@@ -478,7 +484,12 @@ export default function SiteCliente() {
                 color: "#F5D89A", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 6, transition: "all 0.25s"
               }}>
-                <User size={14} /> {step === "conta" ? "Cardápio" : "Minha Conta"}
+                {photoUrl ? (
+                  <img src={photoUrl} alt="Foto" style={{ width: 22, height: 22, borderRadius: "50%", objectFit: "cover", border: "1.5px solid rgba(245,158,11,0.4)" }} />
+                ) : (
+                  <User size={14} />
+                )}
+                {step === "conta" ? "Cardápio" : customer.nome ? customer.nome.split(" ")[0] : "Minha Conta"}
               </button>
               <button onClick={handleLogout} style={{
                 padding: "8px 14px", borderRadius: 100,
